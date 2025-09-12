@@ -71,7 +71,6 @@ const isPasswordVisible = ref(false)
 
 const refVform = ref()
 
-
 const isLoginMode = computed(() => formMode.value === 'login')
 
 // Computed proxy that points to loginData or registerData depending on mode
@@ -118,6 +117,9 @@ const onLoginSubmit = async () => {
     }
 
     formAction.value.formSuccessMessage = 'Successfully Logged in!'
+
+    // Store the selected login mode in session storage for router guard
+    sessionStorage.setItem('loginMode', selectedUserType)
 
     switch (selectedUserType) {
       case 'admin':
@@ -222,7 +224,6 @@ const onFormSubmit = () => {
         <p class="text-body-2 text-medium-emphasis">Sign in to continue your spiritual journey</p>
       </div>
 
-
       <div v-if="isLoginMode" class="auth-form-content">
         <!-- Email field with enhanced styling -->
         <div class="text-subtitle-1 text-medium-emphasis mb-2 d-flex align-center">
@@ -247,7 +248,6 @@ const onFormSubmit = () => {
         <!-- Password field with enhanced styling -->
         <div
           class="text-subtitle-1 text-medium-emphasis mb-2 d-flex align-center justify-space-between"
-
         >
           <div class="d-flex align-center">
             <v-icon size="small" class="mr-2">mdi-lock</v-icon>
@@ -570,7 +570,6 @@ const onFormSubmit = () => {
     <TermsDialog v-model:isOpen="termsDialog.isOpen" />
     <PrivacyDialog v-model:isOpen="privacyDialog.isOpen" />
     <HelpDialog v-model:isOpen="helpDialog.isOpen" />
-
   </div>
 </template>
 

@@ -15,6 +15,7 @@ import 'vuetify/styles'
 import { createVuetify } from 'vuetify'
 import * as components from 'vuetify/components'
 import * as directives from 'vuetify/directives'
+import * as labsComponents from 'vuetify/labs/components'
 
 // Ionic
 import 'vue-toastification/dist/index.css'
@@ -31,6 +32,10 @@ import '@ionic/vue/css/flex-utils.css'
 import '@ionic/vue/css/display.css'
 import Toast from 'vue-toastification'
 
+// Vue Simple Calendar
+import { CalendarView, CalendarViewHeader } from 'vue-simple-calendar'
+import 'vue-simple-calendar/dist/vue-simple-calendar.css'
+
 import App from './App.vue'
 import router from './router'
 
@@ -40,7 +45,10 @@ const vuetify = createVuetify({
   icons: {
     defaultSet: 'mdi', // This is already the default value - only for display purposes
   },
-  components,
+  components: {
+    ...components,
+    ...labsComponents,
+  },
   directives,
 })
 
@@ -49,6 +57,10 @@ import { defineCustomElements } from '@ionic/pwa-elements/loader'
 defineCustomElements(window)
 
 app.config.warnHandler = () => {}
+
+// Register vue-simple-calendar components globally
+app.component('CalendarView', CalendarView)
+app.component('CalendarViewHeader', CalendarViewHeader)
 
 app.use(createPinia())
 app.use(IonicVue)

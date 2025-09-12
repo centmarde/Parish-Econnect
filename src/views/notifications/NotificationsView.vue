@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { useDisplay } from 'vuetify'
 import NavBar2 from '@/components/layout/NavBar2.vue'
 import PreloaderView from '@/components/layout/PreloaderView.vue'
 import NotificationWidget from './components/NotificationWidget.vue'
@@ -9,6 +10,7 @@ import MyForms from '@/components/layout/MyForms.vue'
 import { useRealTimeNotifications } from '@/views/notifications/composables/useRealTimeNotifications.js'
 
 const router = useRouter()
+const { mdAndUp } = useDisplay()
 
 // Use real-time notifications composable
 const {
@@ -47,8 +49,8 @@ const filteredNotifications = computed(() => {
   // Filter by search query
   if (searchQuery.value.trim()) {
     const query = searchQuery.value.toLowerCase()
-    filtered = filtered.filter(n => 
-      n.title.toLowerCase().includes(query) || 
+    filtered = filtered.filter(n =>
+      n.title.toLowerCase().includes(query) ||
       n.message.toLowerCase().includes(query)
     )
   }
@@ -74,7 +76,7 @@ const handleNotificationClick = (notification) => {
   if (!notification.isRead) {
     markAsRead(notification.id)
   }
-  
+
   // Navigate sa action URL kung naa
   if (notification.actionUrl) {
     router.push(notification.actionUrl)
@@ -106,7 +108,7 @@ onMounted(() => {
                   Manage your parish notifications and updates
                 </p>
               </div>
-              
+
               <!-- Unread count badge -->
               <v-chip
                 v-if="unreadCount && unreadCount > 0"
@@ -133,7 +135,7 @@ onMounted(() => {
               prepend-inner-icon="mdi-filter"
             />
           </v-col>
-          
+
           <v-col cols="12" md="5">
             <v-text-field
               v-model="searchQuery"
@@ -145,11 +147,11 @@ onMounted(() => {
               placeholder="Search by title or message..."
             />
           </v-col>
-          
+
           <v-col cols="12" md="3" class="d-flex align-center justify-end">
             <v-btn
               color="primary"
-              variant="text" 
+              variant="text"
               size="small"
               class="me-2"
               :loading="loading"
@@ -158,7 +160,7 @@ onMounted(() => {
             >
               <v-icon icon="mdi-refresh" />
             </v-btn>
-            
+
             <v-btn
               v-if="unreadCount && unreadCount > 0"
               color="primary"
@@ -169,7 +171,7 @@ onMounted(() => {
             >
               Mark All Read
             </v-btn>
-            
+
             <v-btn
               color="error"
               variant="text"
@@ -221,7 +223,8 @@ onMounted(() => {
               </p>
             </div>
 
-            <div v-else class="notifications-list">
+            <!-- Mobile layout (old single-column style) -->
+            <div v-if="!mdAndUp" class="notifications-list-mobile">
               <NotificationWidget
                 v-for="notification in filteredNotifications"
                 :key="notification.id"
@@ -229,8 +232,28 @@ onMounted(() => {
                 @mark-as-read="markAsRead"
                 @click="handleNotificationClick"
                 @delete="deleteNotification"
+                class="mb-2"
               />
             </div>
+
+            <!-- Desktop layout (grid style) -->
+            <v-row v-else class="notifications-list">
+              <v-col
+                v-for="notification in filteredNotifications"
+                :key="notification.id"
+                cols="12"
+                md="4"
+                lg="3"
+                xl="3"
+              >
+                <NotificationWidget
+                  :notification="notification"
+                  @mark-as-read="markAsRead"
+                  @click="handleNotificationClick"
+                  @delete="deleteNotification"
+                />
+              </v-col>
+            </v-row>
           </v-col>
         </v-row>
 
@@ -255,7 +278,7 @@ onMounted(() => {
 
 <style scoped>
 .notifications-list {
-  max-width: 800px;
+  max-width: 100%;
   margin: 0 auto;
 }
 
@@ -264,5 +287,11 @@ onMounted(() => {
   .notifications-list {
     max-width: 100%;
   }
+}
+
+/* Ensure consistent card height in grid layout */
+.notifications-list .v-col {
+  display: flex;
+  flex-direction: column;
 }
 </style>

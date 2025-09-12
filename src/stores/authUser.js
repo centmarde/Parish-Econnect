@@ -14,11 +14,13 @@ import {
   loadRecentActivities,
   approveBooking,
   denyBooking,
+  denyBookingWithComment,
   createEvent,
   checkBookingConflicts,
   getBookingDetails,
   forceApproveBooking,
-} from '@/views/admin/functions/adminDashboard'
+  getBookingAttachedImages,
+} from '@/views/adminOld/functions/adminDashboard'
 
 export const useAuthUserStore = defineStore('authUser', () => {
   const notifications = ref([])
@@ -203,12 +205,13 @@ export const useAuthUserStore = defineStore('authUser', () => {
     return '#9C27B0' // Multiple events color
   })
 
-  // Booking formatting helper
+  // Updated booking formatting helper with proper ending_time support
   const formatBookingDetails = computed(() => (booking) => {
     let title = ''
     let subtitle = ''
     let date = ''
-    let time = ''
+    let starting_time = ''
+    let ending_time = ''
 
     switch (booking.type) {
       case 'wedding':
@@ -219,7 +222,8 @@ export const useAuthUserStore = defineStore('authUser', () => {
         date = booking.wedding_date
           ? new Date(booking.wedding_date).toLocaleDateString()
           : 'Date TBD'
-        time = '10:00 AM' // Default wedding time
+        starting_time = booking.starting_time || '10:00 AM'
+        ending_time = booking.ending_time || '12:00 PM'
         break
 
       case 'baptism':
@@ -228,7 +232,8 @@ export const useAuthUserStore = defineStore('authUser', () => {
         date = booking.baptism_date
           ? new Date(booking.baptism_date).toLocaleDateString()
           : 'Date TBD'
-        time = '2:00 PM' // Default baptism time
+        starting_time = booking.starting_time || '2:00 PM'
+        ending_time = booking.ending_time || '3:00 PM'
         break
 
       case 'funeral':
@@ -237,7 +242,9 @@ export const useAuthUserStore = defineStore('authUser', () => {
         date = booking.funeral_date
           ? new Date(booking.funeral_date).toLocaleDateString()
           : 'Date TBD'
-        time = booking.funeral_time || '9:00 AM'
+        // For funeral, check both starting_time and funeral_time (legacy field)
+        starting_time = booking.starting_time || booking.funeral_time || '9:00 AM'
+        ending_time = booking.ending_time || '10:00 AM'
         break
 
       case 'thanksgiving':
@@ -246,17 +253,19 @@ export const useAuthUserStore = defineStore('authUser', () => {
         date = booking.thanksgiving_date
           ? new Date(booking.thanksgiving_date).toLocaleDateString()
           : 'Date TBD'
-        time = '4:00 PM' // Default thanksgiving time
+        starting_time = booking.starting_time || '4:00 PM'
+        ending_time = booking.ending_time || '5:00 PM'
         break
 
       default:
         title = 'Unknown Event'
         subtitle = 'Details unavailable'
         date = 'Date TBD'
-        time = 'Time TBD'
+        starting_time = 'Time TBD'
+        ending_time = 'Time TBD'
     }
 
-    return { title, subtitle, date, time }
+    return { title, subtitle, date, starting_time, ending_time }
   })
 
   // Notification management
@@ -276,9 +285,9 @@ export const useAuthUserStore = defineStore('authUser', () => {
     }
   }
 
-  // Booking conflict detection
-  const checkConflicts = async (bookingDate, bookingTime) => {
-    return await checkBookingConflicts(bookingDate, bookingTime)
+  // Enhanced booking conflict detection with ending_time support
+  const checkConflicts = async (bookingDate, bookingStartTime, bookingEndTime) => {
+    return await checkBookingConflicts(bookingDate, bookingStartTime, bookingEndTime)
   }
 
   // Get detailed booking information
@@ -286,39 +295,43 @@ export const useAuthUserStore = defineStore('authUser', () => {
     return getBookingDetails(booking)
   }
 
-  // Enhanced approve booking with conflict checking
+  // Enhanced approve booking with proper conflict checking using ending times
   const approveBookingWithConflictCheck = async (booking) => {
     try {
-      // Get the booking date and time
-      let bookingDate, bookingTime
+      // Get the booking date and time with ending times
+      let bookingDate, bookingStartTime, bookingEndTime
 
       switch (booking.type) {
         case 'wedding':
           bookingDate = booking.wedding_date
-          bookingTime = '10:00'
+          bookingStartTime = booking.starting_time || '10:00'
+          bookingEndTime = booking.ending_time || '12:00'
           break
         case 'baptism':
           bookingDate = booking.baptism_date
-          bookingTime = '14:00'
+          bookingStartTime = booking.starting_time || '14:00'
+          bookingEndTime = booking.ending_time || '15:00'
           break
         case 'funeral':
           bookingDate = booking.funeral_date
-          bookingTime = booking.funeral_time || '09:00'
+          bookingStartTime = booking.starting_time || booking.funeral_time || '09:00'
+          bookingEndTime = booking.ending_time || '10:00'
           break
         case 'thanksgiving':
           bookingDate = booking.thanksgiving_date
-          bookingTime = '16:00'
+          bookingStartTime = booking.starting_time || '16:00'
+          bookingEndTime = booking.ending_time || '17:00'
           break
       }
 
-      // Check for conflicts before approving
-      if (bookingDate && bookingTime) {
-        const conflicts = await checkBookingConflicts(bookingDate, bookingTime)
+      // Check for conflicts before approving with proper time ranges
+      if (bookingDate && bookingStartTime && bookingEndTime) {
+        const conflicts = await checkBookingConflicts(bookingDate, bookingStartTime, bookingEndTime)
         if (conflicts.length > 0) {
           return {
             success: false,
             conflicts: conflicts,
-            message: `Conflict detected! There is already a ${conflicts[0].type} scheduled at ${bookingTime} on ${bookingDate}`,
+            message: `Conflict detected! There are ${conflicts.length} conflicting event(s) on ${bookingDate} that overlap with ${bookingStartTime} - ${bookingEndTime}`,
           }
         }
       }
@@ -361,13 +374,16 @@ export const useAuthUserStore = defineStore('authUser', () => {
     loadStats: () => loadStats(stats),
     loadRecentActivities: () => loadRecentActivities(recentActivities),
 
-    // Booking management with conflict detection
+    // Booking management with proper ending_time conflict detection
     approveBooking: approveBookingWithConflictCheck,
     forceApproveBooking: (booking) => forceApproveBooking(booking, loadDashboardData),
     denyBooking: (booking) => denyBooking(booking, loadDashboardData),
+    denyBookingWithComment: (booking, comment) =>
+      denyBookingWithComment(booking, comment, loadDashboardData),
     createEvent: (eventData) => createEvent(eventData, loadDashboardData),
     checkConflicts,
     getDetailedBookingInfo,
+    getBookingAttachedImages,
 
     // Calendar helpers
     hasEvent,
@@ -375,7 +391,7 @@ export const useAuthUserStore = defineStore('authUser', () => {
     getSelectedDateEvents,
     eventDates,
 
-    // Booking helpers
+    // Booking helpers with ending_time support
     formatBookingDetails,
 
     // Notification management

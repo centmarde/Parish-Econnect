@@ -8,16 +8,16 @@ export const useNotificationStore = defineStore('notifications', () => {
   const unreadCount = ref(0)
   const loading = ref(false)
   const error = ref(null)
-  
+
   // Real-time channels para sa wedding ug funeral bookings
   let weddingChannel = null
   let funeralChannel = null
-  
+
   // Computed para sa notification badge visibility
   const hasUnreadNotifications = computed(() => unreadCount.value > 0)
-  
+
   // Computed para sa unread notifications
-  const unreadNotifications = computed(() => 
+  const unreadNotifications = computed(() =>
     notifications.value.filter(n => !n.isRead)
   )
 
@@ -43,7 +43,7 @@ export const useNotificationStore = defineStore('notifications', () => {
         },
         denied: {
           title: 'Wedding Request Denied',
-          message: `Ang inyong wedding request kay ${bookingData.groom_firstname} ug ${bookingData.bride_firstname} on ${bookingData.starting_time} na-deny.  Reasons: ${bookingData.comments}`,
+          message: `Ang inyong wedding request kay ${bookingData.groom_firstname} ug ${bookingData.bride_firstname} on ${bookingData.starting_time} na-deny.  Reasons: ${bookingData.comment}`,
           icon: 'mdi-cancel',
           color: 'error'
         }
@@ -57,7 +57,7 @@ export const useNotificationStore = defineStore('notifications', () => {
         },
         denied: {
           title: 'Funeral Mass Denied',
-          message: `Ang inyong funeral mass request para kay ${bookingData.deceased_firstname} on ${bookingData.starting_time} na-deny. Reasons: ${bookingData.comments}`,
+          message: `Ang inyong funeral mass request para kay ${bookingData.deceased_firstname} on ${bookingData.starting_time} na-deny. Reasons: ${bookingData.comment}`,
           icon: 'mdi-cancel',
           color: 'error'
         }
@@ -85,7 +85,7 @@ export const useNotificationStore = defineStore('notifications', () => {
   const addNotification = async (notification) => {
     // Save to database first
     const dbNotification = await saveNotificationToDatabase(notification)
-    
+
     // If database save successful, use database ID, otherwise use original ID
     const finalNotification = dbNotification ? {
       ...notification,
@@ -95,7 +95,7 @@ export const useNotificationStore = defineStore('notifications', () => {
 
     notifications.value.unshift(finalNotification)
     unreadCount.value = unreadNotifications.value.length
-    
+
     // Optional: Show browser notification if permission granted
     if (Notification.permission === 'granted') {
       new Notification(finalNotification.title, {
@@ -116,7 +116,7 @@ export const useNotificationStore = defineStore('notifications', () => {
             .from('notifications')
             .update({ is_read: true })
             .eq('id', notificationId)
-          
+
           if (error) {
             console.error('Error marking notification as read in database:', error.message)
             return false
@@ -126,7 +126,7 @@ export const useNotificationStore = defineStore('notifications', () => {
           return false
         }
       }
-      
+
       // Update local state
       notification.isRead = true
       unreadCount.value = unreadNotifications.value.length
@@ -147,12 +147,12 @@ export const useNotificationStore = defineStore('notifications', () => {
         .update({ is_read: true })
         .eq('user_id', user.id)
         .eq('is_read', false)
-      
+
       if (error) {
         console.error('Error marking all notifications as read in database:', error.message)
         return false
       }
-      
+
       // Update local state
       notifications.value.forEach(n => n.isRead = true)
       unreadCount.value = 0
@@ -175,12 +175,12 @@ export const useNotificationStore = defineStore('notifications', () => {
         .delete()
         .eq('user_id', user.id)
         .eq('is_read', true)
-      
+
       if (error) {
         console.error('Error clearing read notifications from database:', error.message)
         return false
       }
-      
+
       // Update local state
       notifications.value = notifications.value.filter(n => !n.isRead)
       return true
@@ -201,7 +201,7 @@ export const useNotificationStore = defineStore('notifications', () => {
             .from('notifications')
             .delete()
             .eq('id', notificationId)
-          
+
           if (error) {
             console.error('Error deleting notification from database:', error.message)
             return false
@@ -211,7 +211,7 @@ export const useNotificationStore = defineStore('notifications', () => {
           return false
         }
       }
-      
+
       // Remove from local state
       notifications.value.splice(index, 1)
       unreadCount.value = unreadNotifications.value.length
@@ -294,7 +294,7 @@ export const useNotificationStore = defineStore('notifications', () => {
       notifications.value = transformedNotifications
       unreadCount.value = unreadNotifications.value.length
      // console.log(`Fetched ${transformedNotifications.length} notifications from database`)
-      
+
       return transformedNotifications
     } catch (err) {
       console.error('Failed to fetch notifications from database:', err)
@@ -318,24 +318,24 @@ export const useNotificationStore = defineStore('notifications', () => {
       .channel('wedding-booking-changes')
       .on(
         'postgres_changes',
-        { 
-          event: 'UPDATE', 
-          schema: 'public', 
+        {
+          event: 'UPDATE',
+          schema: 'public',
           table: 'wedding_bookings',
           filter: `user_id=eq.${user.id}` // Filter para sa current user lang
         },
         (payload) => {
          // console.log('Wedding booking change received:', payload)
-          
+
           const oldRecord = payload.old
           const newRecord = payload.new
-          
+
           // Check if is_approved or is_denied changed
           if (oldRecord.is_approved !== newRecord.is_approved && newRecord.is_approved === true) {
             const notification = createNotification('wedding', newRecord, 'approved')
             if (notification) addNotification(notification)
           }
-          
+
           if (oldRecord.is_denied !== newRecord.is_denied && newRecord.is_denied === true) {
             const notification = createNotification('wedding', newRecord, 'denied')
             if (notification) addNotification(notification)
@@ -358,24 +358,24 @@ export const useNotificationStore = defineStore('notifications', () => {
       .channel('funeral-booking-changes')
       .on(
         'postgres_changes',
-        { 
-          event: 'UPDATE', 
-          schema: 'public', 
+        {
+          event: 'UPDATE',
+          schema: 'public',
           table: 'funeral_bookings',
           filter: `user_id=eq.${user.id}` // Filter para sa current user lang
         },
         (payload) => {
          // console.log('Funeral booking change received:', payload)
-          
+
           const oldRecord = payload.old
           const newRecord = payload.new
-          
+
           // Check if is_approved or is_denied changed
           if (oldRecord.is_approved !== newRecord.is_approved && newRecord.is_approved === true) {
             const notification = createNotification('funeral', newRecord, 'approved')
             if (notification) addNotification(notification)
           }
-          
+
           if (oldRecord.is_denied !== newRecord.is_denied && newRecord.is_denied === true) {
             const notification = createNotification('funeral', newRecord, 'denied')
             if (notification) addNotification(notification)
@@ -414,12 +414,12 @@ export const useNotificationStore = defineStore('notifications', () => {
     try {
       // Try to fetch from database first
       const dbNotifications = await fetchNotificationsFromDatabase()
-      
+
       if (dbNotifications.length > 0) {
         // Database has notifications, use them
         return
       }
-      
+
       // If no database notifications, just set empty state
       const user = await getCurrentUser()
       if (user) {

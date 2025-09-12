@@ -31,9 +31,7 @@ const { mobile, mdAndDown } = useDisplay()
 // Load Functions during component rendering
 onMounted(async () => {
   isLoggedIn.value = await authStore.isAuthenticated()
-  await notificationStore.fetchNotifications()
-  //isMobileLogged.value = mobile.value && isLoggedIn.value
-  //isDesktop.value = !mobile.value && (isLoggedIn.value || !isLoggedIn.value)
+  await notificationStore.loadStoredNotifications()
 })
 </script>
 
@@ -61,7 +59,7 @@ onMounted(async () => {
             <h2 :class="mdAndDown ? 'small-header' : 'large-header'" class="ma-0 header">
               SAN ISIDRO LABRADOR PARISH
             </h2>
-            <p v-if="!mobile" class="parish-subtitle ma-0">Faith • Community • Service</p>
+            <p v-if="!mobile" class="parish-subtitle ma-0">Administrative Dashboard</p>
           </div>
         </div>
 
@@ -77,28 +75,41 @@ onMounted(async () => {
                 size="large"
                 rounded="lg"
               >
-                <v-icon class="nav-icon me-2">mdi-home</v-icon>
-                <span class="nav-text">HOME</span>
+                <v-icon class="nav-icon me-2">mdi-view-dashboard</v-icon>
+                <span class="nav-text">DASHBOARD</span>
                 <v-ripple />
               </v-btn>
             </RouterLink>
 
-            <RouterLink to="/book-event" class="router-link">
+            <!-- <RouterLink to="/admin-booking-view" class="router-link">
               <v-btn
-                class="mr-3 nav-btn book-event-btn"
-                variant="elevated"
+                class="mr-3 nav-btn bookings-btn"
+                variant="outlined"
                 size="large"
                 rounded="lg"
-                color="primary"
               >
-                <v-icon class="nav-icon me-2">mdi-calendar-plus</v-icon>
-                <span class="nav-text">BOOK EVENT</span>
+                <v-icon class="nav-icon me-2">mdi-clipboard-check</v-icon>
+                <span class="nav-text">BOOKINGS</span>
+                <v-ripple />
+              </v-btn>
+            </RouterLink> -->
+
+            <!-- MEMBERS MANAGEMENT -->
+            <RouterLink to="admin-members-view" class="router-link">
+              <v-btn
+                class="mr-3 nav-btn members-btn"
+                variant="outlined"
+                size="large"
+                rounded="lg"
+              >
+                <v-icon class="nav-icon me-2">mdi-account-group</v-icon>
+                <span class="nav-text">MEMBERS</span>
                 <v-ripple />
               </v-btn>
             </RouterLink>
 
-            <!-- EVENTS TAB -->
-            <RouterLink to="/events" class="router-link">
+            <!-- EVENTS MANAGEMENT -->
+           <!--  <RouterLink to="admin-events-view" class="router-link">
               <v-btn
                 class="mr-3 nav-btn events-btn"
                 variant="outlined"
@@ -109,10 +120,10 @@ onMounted(async () => {
                 <span class="nav-text">EVENTS</span>
                 <v-ripple />
               </v-btn>
-            </RouterLink>
+            </RouterLink> -->
 
             <!-- NOTIFICATIONS TAB -->
-            <RouterLink to="/notifications" class="router-link">
+          <!--   <RouterLink to="admin-alerts-view" class="router-link">
               <v-badge
                 :model-value="notificationStore.hasUnreadNotifications"
                 :content="notificationStore.unreadCount"
@@ -128,11 +139,13 @@ onMounted(async () => {
                   rounded="lg"
                 >
                   <v-icon class="nav-icon me-2">mdi-bell</v-icon>
-                  <span class="nav-text">NOTIFICATIONS</span>
+                  <span class="nav-text">ALERTS</span>
                   <v-ripple />
                 </v-btn>
               </v-badge>
-            </RouterLink>
+            </RouterLink> -->
+
+
           </div>
           <v-spacer></v-spacer>
 
@@ -197,8 +210,8 @@ onMounted(async () => {
           <div class="d-flex align-center mb-3">
             <v-img src="logo.png" width="35px" class="me-2" />
             <div>
-              <h3 class="drawer-title">Parish Menu</h3>
-              <p class="drawer-subtitle ma-0">Navigate with ease</p>
+              <h3 class="drawer-title">Admin Menu</h3>
+              <p class="drawer-subtitle ma-0">Parish Management</p>
             </div>
           </div>
           <v-divider class="mb-3" />
@@ -210,44 +223,59 @@ onMounted(async () => {
             <ProfileHeader></ProfileHeader>
           </div>
 
-          <!-- HOME -->
+          <!-- DASHBOARD -->
           <v-list-item
             @click="drawer = false"
             class="mobile-nav-item"
             rounded="lg"
             color="primary"
           >
-            <RouterLink to="/homepage" class="router-link mobile-link">
+            <RouterLink to="/admin-dashboard" class="router-link mobile-link">
               <template v-slot:prepend>
-                <v-icon class="mobile-nav-icon">mdi-home</v-icon>
+                <v-icon class="mobile-nav-icon">mdi-view-dashboard</v-icon>
               </template>
-              <v-list-item-title class="mobile-nav-text">HOME</v-list-item-title>
+              <v-list-item-title class="mobile-nav-text">DASHBOARD</v-list-item-title>
             </RouterLink>
           </v-list-item>
 
-          <!-- BOOK EVENT -->
+          <!-- BOOKINGS MANAGEMENT -->
           <v-list-item
             @click="drawer = false"
             class="mobile-nav-item"
             rounded="lg"
             color="primary"
           >
-            <RouterLink to="/book-event" class="router-link mobile-link">
+            <RouterLink to="admin-booking-view" class="router-link mobile-link">
               <template v-slot:prepend>
-                <v-icon class="mobile-nav-icon">mdi-calendar-plus</v-icon>
+                <v-icon class="mobile-nav-icon">mdi-clipboard-check</v-icon>
               </template>
-              <v-list-item-title class="mobile-nav-text">BOOK EVENT</v-list-item-title>
+              <v-list-item-title class="mobile-nav-text">BOOKINGS</v-list-item-title>
             </RouterLink>
           </v-list-item>
 
-          <!-- EVENTS -->
+          <!-- MEMBERS MANAGEMENT -->
           <v-list-item
             @click="drawer = false"
             class="mobile-nav-item"
             rounded="lg"
             color="primary"
           >
-            <RouterLink to="/events" class="router-link mobile-link">
+            <RouterLink to="admin-members-view" class="router-link mobile-link">
+              <template v-slot:prepend>
+                <v-icon class="mobile-nav-icon">mdi-account-group</v-icon>
+              </template>
+              <v-list-item-title class="mobile-nav-text">MEMBERS</v-list-item-title>
+            </RouterLink>
+          </v-list-item>
+
+          <!-- EVENTS MANAGEMENT -->
+          <v-list-item
+            @click="drawer = false"
+            class="mobile-nav-item"
+            rounded="lg"
+            color="primary"
+          >
+            <RouterLink to="admin-events-view" class="router-link mobile-link">
               <template v-slot:prepend>
                 <v-icon class="mobile-nav-icon">mdi-calendar-multiselect</v-icon>
               </template>
@@ -262,7 +290,7 @@ onMounted(async () => {
             rounded="lg"
             color="primary"
           >
-            <RouterLink to="/notifications" class="router-link mobile-link">
+            <RouterLink to="admin-alerts-view" class="router-link mobile-link">
               <template v-slot:prepend>
                 <v-badge
                   :model-value="notificationStore.hasUnreadNotifications"
@@ -274,9 +302,11 @@ onMounted(async () => {
                   <v-icon class="mobile-nav-icon">mdi-bell</v-icon>
                 </v-badge>
               </template>
-              <v-list-item-title class="mobile-nav-text">NOTIFICATIONS</v-list-item-title>
+              <v-list-item-title class="mobile-nav-text">ALERTS</v-list-item-title>
             </RouterLink>
           </v-list-item>
+
+
 
           <v-divider class="my-3" />
 
@@ -359,7 +389,7 @@ onMounted(async () => {
   font-size: 12px;
   color: #424242;
   font-style: italic;
-  font-weight: 300;
+  font-weight: 500;
   letter-spacing: 1px;
   opacity: 0.8;
   margin-top: -2px;
@@ -406,16 +436,17 @@ onMounted(async () => {
   background: rgba(76, 175, 80, 0.1) !important;
 }
 
-.book-event-btn {
-  background: linear-gradient(45deg, #2196f3, #1976d2) !important;
-  color: white !important;
-  box-shadow: 0 4px 15px rgba(33, 150, 243, 0.3);
-}
 
-.book-event-btn:hover {
+.bookings-btn:hover {
   background: linear-gradient(45deg, #1976d2, #1565c0) !important;
   transform: translateY(-3px);
   box-shadow: 0 8px 25px rgba(33, 150, 243, 0.4);
+}
+
+.members-btn:hover {
+  border-color: #9c27b0 !important;
+  color: #9c27b0 !important;
+  background: rgba(156, 39, 176, 0.1) !important;
 }
 
 .events-btn:hover {
@@ -429,6 +460,8 @@ onMounted(async () => {
   color: #f44336 !important;
   background: rgba(244, 67, 54, 0.1) !important;
 }
+
+
 
 .nav-icon {
   transition: all 0.3s ease;

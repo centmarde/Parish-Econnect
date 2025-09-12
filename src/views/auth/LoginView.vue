@@ -132,22 +132,11 @@ const { mobile } = useDisplay()
   justify-content: center;
   align-items: center;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  animation: bounce 4s infinite ease-in-out;
 }
 
 .cardd {
   justify-content: center;
   display: flex;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  animation: bounce 4s infinite ease-in-out;
-}
-@keyframes bounce {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-15px);
-  }
 }
 </style>

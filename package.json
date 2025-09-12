@@ -23,12 +23,14 @@
     "@supabase/supabase-js": "^2.49.4",
     "@vuepic/vue-datepicker": "^11.0.2",
     "axios": "^1.9.0",
+    "date-fns": "^4.1.0",
     "ionicons": "^8.0.13",
     "pinia": "^3.0.1",
     "vue": "^3.5.13",
     "vue-router": "^4.5.0",
+    "vue-simple-calendar": "^7.2.1",
     "vue-toastification": "^2.0.0-rc.5",
-    "vuetify": "^3.8.0"
+    "vuetify": "^3.10.0"
   },
   "devDependencies": {
     "@capacitor/cli": "^7.0.1",

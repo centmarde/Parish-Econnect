@@ -99,17 +99,17 @@ const formData = computed({
         />
       </v-col>
     </v-row>
-    
-    <!-- Wedding Date -->
+
+    <!-- Wedding Date & Time -->
     <v-divider thickness="2" class="my-4">
       <v-chip color="purple" variant="outlined">
         <v-icon start>mdi-calendar-heart</v-icon>
-        Wedding Date
+        Wedding Date & Time
       </v-chip>
     </v-divider>
 
     <v-row class="mt-2">
-      <v-col cols="12" md="6">
+      <v-col cols="12" md="4">
         <v-text-field
           v-model="formData.wedding_date"
           :rules="dateRules"
@@ -120,21 +120,31 @@ const formData = computed({
           required
         />
       </v-col>
-    </v-row>
-    <v-row class="mt-2">
-      <v-col cols="12" md="6">
-      <!-- input para sa wedding time -->
-      <v-text-field
-        v-model="formData.starting_time"
-        :rules="timeRules"
-        type="time"
-        label="Select time for the wedding"
-        prepend-inner-icon="mdi-clock-outline"
-        variant="outlined"
-        required
-      />
+      <v-col cols="12" md="4">
+        <v-text-field
+          v-model="formData.starting_time"
+          :rules="timeRules"
+          type="time"
+          label="Wedding start time"
+          prepend-inner-icon="mdi-clock-outline"
+          variant="outlined"
+          required
+        />
+      </v-col>
+      <v-col cols="12" md="4">
+        <v-text-field
+          v-model="formData.ending_time"
+          :rules="timeRules"
+          type="time"
+          label="Wedding end time"
+          prepend-inner-icon="mdi-clock-end"
+          variant="outlined"
+          required
+        />
       </v-col>
     </v-row>
+
+
   </v-card>
 </template>
 

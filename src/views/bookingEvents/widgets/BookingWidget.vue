@@ -1,5 +1,5 @@
 <script setup>
-import { getEventItems, cleanEventName, isWeddingEvent } from '../functions/helpers'
+import { getEventItems, cleanEventName, isWeddingEvent, isFuneralEvent, isThanksgivingEvent, isBaptismEvent } from '../functions/helpers'
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 
@@ -14,8 +14,7 @@ onMounted(() => {
   }, 200)
 })
 
-// Handle booking action for each item. If the item is the wedding event,
-// redirect directly to the wedding form route.
+// Handle booking action for each item. Route each event type to its corresponding form.
 const handleBooking = (item) => {
   if (!item) return
 
@@ -25,14 +24,31 @@ const handleBooking = (item) => {
     return
   }
 
-  // Fallback behavior for other items - open dialog or continue booking flow
-  // For now just log selection; other flows can be implemented later.
+  if (isFuneralEvent(item)) {
+    // direct navigation to the funeral mass form
+    router.push('/funeral-mass')
+    return
+  }
+
+  if (isThanksgivingEvent(item)) {
+    // direct navigation to the thanksgiving mass form
+    router.push('/thanks-giving-mass')
+    return
+  }
+
+  if (isBaptismEvent(item)) {
+    // direct navigation to the baptism mass form
+    router.push('/baptism-mass')
+    return
+  }
+
+  // Fallback behavior for any other items
   console.log('Selected booking item:', item)
 }
 </script>
 
 <template>
-  <div 
+  <div
     class="booking-widget-container pa-0"
     :class="{ 'animate-in': isVisible }"
   >
@@ -57,10 +73,10 @@ const handleBooking = (item) => {
 
     <!-- Mobile: 2 rows x 2 columns, Desktop: 1 row x 4 columns -->
     <v-row class="g-4">
-      <v-col 
-        v-for="(item, index) in items" 
-        :key="item.name" 
-        cols="6" 
+      <v-col
+        v-for="(item, index) in items"
+        :key="item.name"
+        cols="6"
         md="3"
         class="event-card-col"
         :style="{ '--delay': `${index * 100}ms` }"
@@ -73,10 +89,10 @@ const handleBooking = (item) => {
           <v-card-text class="pa-4 text-center flex-grow-1 d-flex flex-column">
             <!-- Icon with pulsing effect -->
             <div class="icon-container mb-3">
-              <v-icon 
-                :icon="item.icon" 
-                size="40" 
-                color="primary" 
+              <v-icon
+                :icon="item.icon"
+                size="40"
+                color="primary"
                 class="event-icon"
               />
             </div>
@@ -208,15 +224,15 @@ const handleBooking = (item) => {
   .event-card {
     min-height: 180px;
   }
-  
+
   .event-icon {
     font-size: 32px !important;
   }
-  
+
   .event-title {
     font-size: 0.95rem;
   }
-  
+
   .booking-widget-container {
     margin: 0 8px;
   }
@@ -226,15 +242,15 @@ const handleBooking = (item) => {
   .event-card {
     min-height: 160px;
   }
-  
+
   .event-icon {
     font-size: 28px !important;
   }
-  
+
   .event-title {
     font-size: 0.9rem;
   }
-  
+
   .book-btn {
     font-size: 0.75rem;
     padding: 4px 12px;

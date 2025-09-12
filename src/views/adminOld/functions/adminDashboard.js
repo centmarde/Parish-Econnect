@@ -71,6 +71,52 @@ export function getEventGradient(type) {
   return category?.gradient || 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
 }
 
+// Helper function to parse time and handle conflicts
+function parseTimeToMinutes(timeStr) {
+  if (!timeStr) return null
+
+  // Handle different time formats
+  let cleanTime = timeStr
+    .toString()
+    .toLowerCase()
+    .replace(/[^0-9:apm\s]/g, '')
+
+  // If it's in HH:MM format (24-hour)
+  if (cleanTime.match(/^\d{1,2}:\d{2}$/)) {
+    const [hours, minutes] = cleanTime.split(':').map(Number)
+    return hours * 60 + minutes
+  }
+
+  // If it's in 12-hour format with AM/PM
+  const match = cleanTime.match(/(\d{1,2}):(\d{2})\s*(am|pm)?/)
+  if (match) {
+    let [, hours, minutes, period] = match
+    hours = parseInt(hours)
+    minutes = parseInt(minutes)
+
+    if (period === 'pm' && hours !== 12) hours += 12
+    if (period === 'am' && hours === 12) hours = 0
+
+    return hours * 60 + minutes
+  }
+
+  return null
+}
+
+function checkTimeConflict(start1, end1, start2, end2) {
+  const start1Minutes = parseTimeToMinutes(start1)
+  const end1Minutes = parseTimeToMinutes(end1)
+  const start2Minutes = parseTimeToMinutes(start2)
+  const end2Minutes = parseTimeToMinutes(end2)
+
+  if (!start1Minutes || !end1Minutes || !start2Minutes || !end2Minutes) {
+    return false // Can't determine conflict without valid times
+  }
+
+  // Check if times overlap
+  return start1Minutes < end2Minutes && end1Minutes > start2Minutes
+}
+
 // Dashboard functions
 export async function loadPendingBookings(pendingBookings, stats) {
   try {
@@ -94,6 +140,9 @@ export async function loadPendingBookings(pendingBookings, stats) {
           table: 'wedding_bookings',
           event_date: booking.wedding_date,
           status: 'pending',
+          // Use database values or defaults
+          starting_time: booking.starting_time || '10:00',
+          ending_time: booking.ending_time || '12:00',
         })),
       )
     }
@@ -107,6 +156,9 @@ export async function loadPendingBookings(pendingBookings, stats) {
           table: 'baptism_bookings',
           event_date: booking.baptism_date,
           status: 'pending',
+          // Use database values or defaults
+          starting_time: booking.starting_time || '14:00',
+          ending_time: booking.ending_time || '15:00',
         })),
       )
     }
@@ -119,7 +171,9 @@ export async function loadPendingBookings(pendingBookings, stats) {
           type: 'funeral',
           table: 'funeral_bookings',
           event_date: booking.funeral_date,
-          event_time: booking.funeral_time,
+          // For funeral, use starting_time from database or funeral_time as fallback
+          starting_time: booking.starting_time || booking.funeral_time || '09:00',
+          ending_time: booking.ending_time || '10:00',
           status: 'pending',
         })),
       )
@@ -134,6 +188,9 @@ export async function loadPendingBookings(pendingBookings, stats) {
           table: 'thanksgiving_bookings',
           event_date: booking.thanksgiving_date,
           status: 'pending',
+          // Use database values or defaults
+          starting_time: booking.starting_time || '16:00',
+          ending_time: booking.ending_time || '17:00',
         })),
       )
     }
@@ -205,7 +262,8 @@ export async function loadCalendarEvents(calendarEvents) {
         ...approvedWeddings.data.map((booking) => ({
           id: `wedding-${booking.id}`,
           date: booking.wedding_date,
-          time: '10:00', // Default time, adjust as needed
+          starting_time: booking.starting_time || '10:00',
+          ending_time: booking.ending_time || '12:00',
           title:
             booking.title || `Wedding: ${booking.bride_firstname} & ${booking.groom_firstname}`,
           location: 'Parish Church',
@@ -224,7 +282,8 @@ export async function loadCalendarEvents(calendarEvents) {
         ...approvedBaptisms.data.map((booking) => ({
           id: `baptism-${booking.id}`,
           date: booking.baptism_date,
-          time: '14:00', // Default time
+          starting_time: booking.starting_time || '14:00',
+          ending_time: booking.ending_time || '15:00',
           title: `Baptism: ${booking.child_firstname} ${booking.child_lastname}`,
           location: 'Parish Church',
           type: 'baptism',
@@ -242,7 +301,8 @@ export async function loadCalendarEvents(calendarEvents) {
         ...approvedFunerals.data.map((booking) => ({
           id: `funeral-${booking.id}`,
           date: booking.funeral_date,
-          time: booking.funeral_time || '09:00',
+          starting_time: booking.starting_time || booking.funeral_time || '09:00',
+          ending_time: booking.ending_time || '10:00',
           title: `Funeral: ${booking.deceased_firstname} ${booking.deceased_lastname}`,
           location: 'Parish Church',
           type: 'funeral',
@@ -260,7 +320,8 @@ export async function loadCalendarEvents(calendarEvents) {
         ...approvedThanksgivings.data.map((booking) => ({
           id: `thanksgiving-${booking.id}`,
           date: booking.thanksgiving_date,
-          time: '16:00', // Default time
+          starting_time: booking.starting_time || '16:00',
+          ending_time: booking.ending_time || '17:00',
           title: `Thanksgiving: ${booking.participant_firstname} ${booking.participant_lastname}`,
           location: 'Parish Church',
           type: 'thanksgiving',
@@ -277,7 +338,8 @@ export async function loadCalendarEvents(calendarEvents) {
     const announcementEvents = (announcements || []).map((event) => ({
       id: `announcement-${event.id}`,
       date: event.date,
-      time: event.time,
+      starting_time: event.starting_time,
+      ending_time: event.ending_time,
       title: event.title,
       location: 'Parish',
       type: event.type || 'announcement',
@@ -289,7 +351,10 @@ export async function loadCalendarEvents(calendarEvents) {
 
     calendarEvents.value = [...events, ...announcementEvents]
       .filter((event) => event.date) // Filter out events without dates
-      .sort((a, b) => new Date(`${a.date} ${a.time}`) - new Date(`${b.date} ${b.time}`))
+      .sort(
+        (a, b) =>
+          new Date(`${a.date} ${a.starting_time}`) - new Date(`${b.date} ${b.starting_time}`),
+      )
   } catch (error) {
     console.error('Error loading calendar events:', error)
   }
@@ -336,7 +401,7 @@ export async function forceApproveBooking(booking, loadDashboardData) {
     // Determine the correct approval column based on booking type
     let approvalColumn = 'is_approved'
     if (booking.type === 'wedding') {
-      approvalColumn = 'is_approved' // Note: wedding table uses 'is_approve' not 'is_approved'
+      approvalColumn = 'is_approved' // Note: wedding table uses 'is_approved'
     }
 
     const { error } = await supabase
@@ -356,8 +421,10 @@ export async function forceApproveBooking(booking, loadDashboardData) {
       {
         action: `Force approved ${booking.type} booking for ${getBookingName(booking)} despite conflicts`,
         user_id: user.id,
-        old_role: 'pending',
-        new_role: 'approved_with_conflict',
+        table_name: booking.table,
+        record_id: booking.id,
+        old_data: { is_approved: false },
+        new_data: { is_approved: true },
         changed_at: new Date().toISOString(),
       },
     ])
@@ -370,7 +437,7 @@ export async function forceApproveBooking(booking, loadDashboardData) {
   }
 }
 
-export async function checkBookingConflicts(bookingDate, bookingTime) {
+export async function checkBookingConflicts(bookingDate, bookingStartTime, bookingEndTime) {
   try {
     // Check all approved bookings for conflicts
     const [approvedWeddings, approvedBaptisms, approvedFunerals, approvedThanksgivings] =
@@ -387,13 +454,18 @@ export async function checkBookingConflicts(bookingDate, bookingTime) {
     if (approvedWeddings.data) {
       approvedWeddings.data.forEach((booking) => {
         if (booking.wedding_date === bookingDate) {
-          const weddingTime = '10:00' // Default wedding time
-          if (weddingTime === bookingTime) {
+          const weddingStartTime = booking.starting_time || '10:00'
+          const weddingEndTime = booking.ending_time || '12:00'
+
+          if (
+            checkTimeConflict(bookingStartTime, bookingEndTime, weddingStartTime, weddingEndTime)
+          ) {
             conflicts.push({
               type: 'wedding',
               name: getBookingName({ ...booking, type: 'wedding' }),
               date: booking.wedding_date,
-              time: weddingTime,
+              starting_time: weddingStartTime,
+              ending_time: weddingEndTime,
               id: booking.id,
             })
           }
@@ -405,13 +477,18 @@ export async function checkBookingConflicts(bookingDate, bookingTime) {
     if (approvedBaptisms.data) {
       approvedBaptisms.data.forEach((booking) => {
         if (booking.baptism_date === bookingDate) {
-          const baptismTime = '14:00' // Default baptism time
-          if (baptismTime === bookingTime) {
+          const baptismStartTime = booking.starting_time || '14:00'
+          const baptismEndTime = booking.ending_time || '15:00'
+
+          if (
+            checkTimeConflict(bookingStartTime, bookingEndTime, baptismStartTime, baptismEndTime)
+          ) {
             conflicts.push({
               type: 'baptism',
               name: getBookingName({ ...booking, type: 'baptism' }),
               date: booking.baptism_date,
-              time: baptismTime,
+              starting_time: baptismStartTime,
+              ending_time: baptismEndTime,
               id: booking.id,
             })
           }
@@ -423,13 +500,18 @@ export async function checkBookingConflicts(bookingDate, bookingTime) {
     if (approvedFunerals.data) {
       approvedFunerals.data.forEach((booking) => {
         if (booking.funeral_date === bookingDate) {
-          const funeralTime = booking.funeral_time || '09:00'
-          if (funeralTime === bookingTime) {
+          const funeralStartTime = booking.starting_time || booking.funeral_time || '09:00'
+          const funeralEndTime = booking.ending_time || '10:00'
+
+          if (
+            checkTimeConflict(bookingStartTime, bookingEndTime, funeralStartTime, funeralEndTime)
+          ) {
             conflicts.push({
               type: 'funeral',
               name: getBookingName({ ...booking, type: 'funeral' }),
               date: booking.funeral_date,
-              time: funeralTime,
+              starting_time: funeralStartTime,
+              ending_time: funeralEndTime,
               id: booking.id,
             })
           }
@@ -441,13 +523,23 @@ export async function checkBookingConflicts(bookingDate, bookingTime) {
     if (approvedThanksgivings.data) {
       approvedThanksgivings.data.forEach((booking) => {
         if (booking.thanksgiving_date === bookingDate) {
-          const thanksgivingTime = '16:00' // Default thanksgiving time
-          if (thanksgivingTime === bookingTime) {
+          const thanksgivingStartTime = booking.starting_time || '16:00'
+          const thanksgivingEndTime = booking.ending_time || '17:00'
+
+          if (
+            checkTimeConflict(
+              bookingStartTime,
+              bookingEndTime,
+              thanksgivingStartTime,
+              thanksgivingEndTime,
+            )
+          ) {
             conflicts.push({
               type: 'thanksgiving',
               name: getBookingName({ ...booking, type: 'thanksgiving' }),
               date: booking.thanksgiving_date,
-              time: thanksgivingTime,
+              starting_time: thanksgivingStartTime,
+              ending_time: thanksgivingEndTime,
               id: booking.id,
             })
           }
@@ -463,12 +555,20 @@ export async function checkBookingConflicts(bookingDate, bookingTime) {
 
     if (announcements) {
       announcements.forEach((event) => {
-        if (event.time === bookingTime) {
+        const eventStartTime = event.starting_time
+        const eventEndTime = event.ending_time
+
+        if (
+          eventStartTime &&
+          eventEndTime &&
+          checkTimeConflict(bookingStartTime, bookingEndTime, eventStartTime, eventEndTime)
+        ) {
           conflicts.push({
             type: event.type || 'announcement',
             name: event.title,
             date: event.date,
-            time: event.time,
+            starting_time: eventStartTime,
+            ending_time: eventEndTime,
             id: event.id,
           })
         }
@@ -493,7 +593,7 @@ export async function approveBooking(booking, loadDashboardData) {
     // Determine the correct approval column based on booking type
     let approvalColumn = 'is_approved'
     if (booking.type === 'wedding') {
-      approvalColumn = 'is_approve' // Note: wedding table uses 'is_approve' not 'is_approved'
+      approvalColumn = 'is_approved' // Note: wedding table uses 'is_approved'
     }
 
     const { error } = await supabase
@@ -513,8 +613,10 @@ export async function approveBooking(booking, loadDashboardData) {
       {
         action: `Approved ${booking.type} booking for ${getBookingName(booking)}`,
         user_id: user.id,
-        old_role: 'pending',
-        new_role: 'approved',
+        table_name: booking.table,
+        record_id: booking.id,
+        old_data: { is_approved: false },
+        new_data: { is_approved: true },
         changed_at: new Date().toISOString(),
       },
     ])
@@ -526,6 +628,7 @@ export async function approveBooking(booking, loadDashboardData) {
     return { error }
   }
 }
+
 export async function denyBooking(booking, loadDashboardData) {
   try {
     const {
@@ -533,10 +636,6 @@ export async function denyBooking(booking, loadDashboardData) {
       error: userError,
     } = await supabase.auth.getUser()
     if (userError) throw userError
-
-    // For denial, we could either delete the record or add a denied status
-    // Since the tables use boolean fields, we'll keep them as false but could add logic later
-    // For now, let's delete the booking or add a denied timestamp
 
     const updates = {
       // Keep the approval as false but add denial info
@@ -552,8 +651,10 @@ export async function denyBooking(booking, loadDashboardData) {
       {
         action: `Denied ${booking.type} booking for ${getBookingName(booking)}`,
         user_id: user.id,
-        old_role: 'pending',
-        new_role: 'denied',
+        table_name: booking.table,
+        record_id: booking.id,
+        old_data: { is_approved: false },
+        new_data: { is_denied: true },
         changed_at: new Date().toISOString(),
       },
     ])
@@ -566,6 +667,77 @@ export async function denyBooking(booking, loadDashboardData) {
   }
 }
 
+export async function denyBookingWithComment(booking, denialComment, loadDashboardData) {
+  try {
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser()
+    if (userError) throw userError
+
+    const updates = {
+      is_denied: true,
+      comment: denialComment,
+      denied_at: new Date().toISOString(),
+      denied_by: user.id,
+    }
+
+    const { error } = await supabase.from(booking.table).update(updates).eq('id', booking.id)
+
+    if (error) throw error
+
+    await supabase.from('audit_logs').insert([
+      {
+        action: `Denied ${booking.type} booking for ${getBookingName(booking)} with comment: "${denialComment}"`,
+        user_id: user.id,
+        table_name: booking.table,
+        record_id: booking.id,
+        old_data: { is_approved: false, is_denied: false },
+        new_data: { is_approved: false, is_denied: true, comment: denialComment },
+        changed_at: new Date().toISOString(),
+      },
+    ])
+
+    // Send notification to user about denial
+    await supabase.from('notifications').insert([
+      {
+        user_id: booking.user_id,
+        title: `${booking.type.charAt(0).toUpperCase() + booking.type.slice(1)} Booking Denied`,
+        message: `Your ${booking.type} booking has been denied. Reason: ${denialComment}`,
+        color: 'error',
+        icon: 'mdi-close-circle',
+        is_read: false,
+      },
+    ])
+
+    await loadDashboardData()
+    return { success: true }
+  } catch (error) {
+    console.error('Error denying booking with comment:', error)
+    return { error }
+  }
+}
+
+// Function to get attached images for a booking
+export function getBookingAttachedImages(booking) {
+  const images = []
+
+  switch (booking.type) {
+    case 'wedding':
+      if (booking.attached_images_1) images.push(booking.attached_images_1)
+      if (booking.attached_images_2) images.push(booking.attached_images_2)
+      if (booking.attached_images_3) images.push(booking.attached_images_3)
+      break
+    case 'baptism':
+    case 'funeral':
+    case 'thanksgiving':
+      if (booking.attached_images) images.push(booking.attached_images)
+      break
+  }
+
+  return images.filter((img) => img && img.trim() !== '')
+}
+
 export async function createEvent(eventData, loadDashboardData) {
   try {
     const { error } = await supabase.from('announcements').insert([
@@ -573,7 +745,8 @@ export async function createEvent(eventData, loadDashboardData) {
         title: eventData.title,
         description: eventData.description,
         date: eventData.date,
-        time: eventData.time,
+        starting_time: eventData.starting_time,
+        ending_time: eventData.ending_time,
         type: eventData.type,
         created_at: new Date().toISOString(),
       },
@@ -627,8 +800,9 @@ export function getBookingDetails(booking) {
         groomLastName: booking.groom_lastname,
         title: booking.title,
         weddingDate: booking.wedding_date,
-        time: '10:00', // Default wedding time
-        comments: booking.comments,
+        starting_time: booking.starting_time || '10:00',
+        ending_time: booking.ending_time || '12:00',
+        comments: booking.comment,
         attachedImages: booking.attached_images,
         contactInfo: `Contact via user: ${booking.user_id}`,
       }
@@ -646,7 +820,8 @@ export function getBookingDetails(booking) {
         godparentFirstName: booking.godparent_firstname,
         godparentLastName: booking.godparent_lastname,
         baptismDate: booking.baptism_date,
-        time: '14:00', // Default baptism time
+        starting_time: booking.starting_time || '14:00',
+        ending_time: booking.ending_time || '15:00',
         additionalNotes: booking.additional_notes,
         attachedImages: booking.attached_images,
         contactInfo: `Contact via user: ${booking.user_id}`,
@@ -665,8 +840,8 @@ export function getBookingDetails(booking) {
         contactEmail: booking.contact_email,
         relationshipToDeceased: booking.relationship_to_deceased,
         funeralDate: booking.funeral_date,
-        funeralTime: booking.funeral_time,
-        time: booking.funeral_time || '09:00',
+        starting_time: booking.starting_time || booking.funeral_time || '09:00',
+        ending_time: booking.ending_time || '10:00',
         attachedImages: booking.attached_images,
         contactInfo: `${booking.contact_phone || ''} ${booking.contact_email || ''}`.trim(),
       }
@@ -680,7 +855,8 @@ export function getBookingDetails(booking) {
         reasonForThanksgiving: booking.reason_for_thanksgiving,
         familyMembersCount: booking.family_members_count,
         thanksgivingDate: booking.thanksgiving_date,
-        time: '16:00', // Default thanksgiving time
+        starting_time: booking.starting_time || '16:00',
+        ending_time: booking.ending_time || '17:00',
         attachedImages: booking.attached_images,
         contactInfo: `Contact via user: ${booking.user_id}`,
       }

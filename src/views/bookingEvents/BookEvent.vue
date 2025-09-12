@@ -42,17 +42,18 @@ onMounted(() => {
 
         <!-- Content -->
         <v-container class="content-wrapper">
+           <v-row>
+            <v-col cols="12">
+              <EventGuide />
+            </v-col>
+          </v-row>
+
             <v-row>
             <v-col cols="12">
               <MyForms />
             </v-col>
           </v-row>
-          <v-row>
-            <v-col cols="12">
-              <EventGuide />
-            </v-col>
-          </v-row>
-        
+
           <!-- Booking Widget Section -->
           <v-row class="my-1">
             <v-col cols="12">
