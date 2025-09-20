@@ -75,6 +75,21 @@ export function useBaptismHeader() {
 		return booking?.is_approved === true
 	}
 
+	const deleteBooking = async (booking: any) => {
+		try {
+			const result = await baptismStore.deleteBooking(booking.id)
+			return result
+		} catch (error) {
+			console.error('Error deleting baptism booking:', error)
+			return { success: false, error: error.message || 'Failed to delete booking' }
+		}
+	}
+
+	const canDelete = (booking: any) => {
+		// Allow deletion for all bookings regardless of status
+		return booking ? true : false
+	}
+
 	// Watch para sa mga changes sa bookings especially kung naa na'y completion status
 	watch(
 		() => baptismStore.bookings,
@@ -100,5 +115,7 @@ export function useBaptismHeader() {
 		getStatusText,
 		handleBookingClick,
 		isClickable,
+		deleteBooking,
+		canDelete,
 	}
 }

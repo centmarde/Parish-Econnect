@@ -159,31 +159,31 @@ export function useAdminDashboard() {
       const [approvedWeddings, approvedBaptisms, approvedFunerals, approvedThanksgivings, announcements] = await Promise.all([
         supabase
           .from('wedding_bookings')
-          .select('wedding_date, bride_firstname, groom_firstname')
+          .select('*')
           .eq('is_approved', true)
           .gte('wedding_date', currentDate)
           .order('wedding_date', { ascending: true }),
         supabase
           .from('baptism_bookings')
-          .select('baptism_date, child_firstname, child_lastname')
+          .select('*')
           .eq('is_approved', true)
           .gte('baptism_date', currentDate)
           .order('baptism_date', { ascending: true }),
         supabase
           .from('funeral_bookings')
-          .select('funeral_date, deceased_firstname, deceased_lastname')
+          .select('*')
           .eq('is_approved', true)
           .gte('funeral_date', currentDate)
           .order('funeral_date', { ascending: true }),
         supabase
           .from('thanksgiving_bookings')
-          .select('thanksgiving_date, title, organizer')
+          .select('*')
           .eq('is_approved', true)
           .gte('thanksgiving_date', currentDate)
           .order('thanksgiving_date', { ascending: true }),
         supabase
           .from('announcements')
-          .select('date, title')
+          .select('*')
           .gte('date', currentDate)
           .order('date', { ascending: true })
       ])

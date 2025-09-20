@@ -24,15 +24,15 @@ export function useThanksGivingHeader() {
 		// Completed bookings (have ref number) are success
 		if (booking?.ref_number) {
 			return 'success'
-		} 
+		}
 		// Explicit denied state should be shown as error (red)
 		else if (booking?.is_denied === true) {
 			return 'error'
-		} 
+		}
 		// Approved but not yet completed
 		else if (booking?.is_approved === true) {
 			return 'success'
-		} 
+		}
 		// Explicit pending/false approval
 		else if (booking?.is_approved === false) {
 			return 'warning'
@@ -56,13 +56,13 @@ export function useThanksGivingHeader() {
 	}
 
 	const handleBookingClick = (booking: any) => {
-		// Click lang kung approved ang booking ug dili pa kompleto (walay ref_number) - redirect to thanks giving form para ma-continue
+		// Click lang kung approved ang booking ug dili pa kompleto (walay ref_number) - redirect to thanksgiving form para ma-continue
 		// Use isClickable so the same rule is applied consistently
 		if (isClickable(booking)) {
 			// store the selected booking id sa store para magamit sa next view
 			thanksGivingStore.selectBooking(booking.id)
 			// navigate and pass booking id as a query param
-			router.push({ path: '/thanks-giving-continue', query: { bookingId: String(booking.id) } })
+			router.push({ path: '/thanksgiving-mass-continue', query: { bookingId: String(booking.id) } })
 		}
 	}
 
@@ -73,6 +73,21 @@ export function useThanksGivingHeader() {
 		if (booking.ref_number) return false
 		if (booking.is_denied === true) return false
 		return booking.is_approved === true
+	}
+
+	const deleteBooking = async (booking: any) => {
+		try {
+			const result = await thanksGivingStore.deleteBooking(booking.id)
+			return result
+		} catch (error) {
+			console.error('Error deleting thanksgiving booking:', error)
+			return { success: false, error: error.message || 'Failed to delete booking' }
+		}
+	}
+
+	const canDelete = (booking: any) => {
+		// Allow deletion for all bookings regardless of status
+		return booking ? true : false
 	}
 
 	// Watch para sa mga changes sa bookings especially kung naa na'y ref_number
@@ -100,5 +115,7 @@ export function useThanksGivingHeader() {
 		getStatusText,
 		handleBookingClick,
 		isClickable,
+		deleteBooking,
+		canDelete,
 	}
 }

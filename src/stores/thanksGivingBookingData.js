@@ -174,7 +174,7 @@ export const useThanksGivingStore = defineStore('thanksGivingData', {
       try {
         const { data, error } = await supabase
           .from('thanksgiving_bookings')
-          .select('id')
+          .select('*')
           .eq('user_id', user.id)
           .order('created_at', { ascending: false })
           .limit(1)
@@ -184,12 +184,49 @@ export const useThanksGivingStore = defineStore('thanksGivingData', {
           return null
         }
 
-        const id = data && data[0] ? data[0].id : null
+        const id = data && data[0] ? data[0].ref_number : null
         console.log('Reference id nga na-fetch:', id)
         return id
       } catch (err) {
         this.error = err.message
         return null
+      }
+    },
+
+    // Delete a thanksgiving booking
+    async deleteBooking(bookingId) {
+      this.loading = true
+      this.error = null
+
+      try {
+        // Get current user
+        const user = await this.getUser()
+        if (!user) {
+          this.error = 'User not authenticated'
+          return { success: false, error: 'User not authenticated' }
+        }
+
+        // Delete the booking (only allow user to delete their own bookings)
+        const { data, error } = await supabase
+          .from('thanksgiving_bookings')
+          .delete()
+          .eq('id', bookingId)
+          .eq('user_id', user.id) // Ensure user can only delete their own bookings
+
+        if (error) {
+          this.error = error.message
+          return { success: false, error: error.message }
+        }
+
+        // Remove from local state
+        this.bookings = this.bookings.filter(booking => booking.id !== bookingId)
+
+        return { success: true, data }
+      } catch (err) {
+        this.error = err.message
+        return { success: false, error: err.message }
+      } finally {
+        this.loading = false
       }
     },
   },

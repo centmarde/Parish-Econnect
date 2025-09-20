@@ -21,19 +21,18 @@ export function useFuneralHeader() {
 	}
 
 	const getStatusColor = (booking: any) => {
-		// Funeral bookings don't have ref_number field, use id as completion indicator
-		// Or check if there's a completion status field in the funeral booking schema
-		if (booking?.is_completed === true) {
+		// Check if booking is completed (either by ref_number or is_completed flag)
+		if (booking?.is_completed === true || booking?.ref_number) {
 			return 'success'
-		} 
+		}
 		// Explicit denied state should be shown as error (red)
 		else if (booking?.is_denied === true) {
 			return 'error'
-		} 
+		}
 		// Approved but not yet completed
 		else if (booking?.is_approved === true) {
-			return 'success'
-		} 
+			return 'primary'
+		}
 		// Explicit pending/false approval
 		else if (booking?.is_approved === false) {
 			return 'warning'
@@ -43,7 +42,7 @@ export function useFuneralHeader() {
 	}
 
 	const getStatusText = (booking: any) => {
-		if (booking?.ref_number) {
+		if (booking?.is_completed === true || booking?.ref_number) {
 			return 'Completed'
 		} else if (booking?.is_denied === true) {
 			return 'Denied'
@@ -70,10 +69,28 @@ export function useFuneralHeader() {
 	const isClickable = (booking: any) => {
 		// Only clickable when approved and NOT completed
 		if (!booking) return false
-		// Not clickable if booking already completed or explicitly denied
+		// Not clickable if booking already completed (either by ref_number or is_completed flag)
 		if (booking?.is_completed === true) return false
+		if (booking?.ref_number) return false
+		// Not clickable if booking is explicitly denied
 		if (booking?.is_denied === true) return false
+		// Only clickable if approved and not completed
 		return booking?.is_approved === true
+	}
+
+	const deleteBooking = async (booking: any) => {
+		try {
+			const result = await funeralStore.deleteBooking(booking.id)
+			return result
+		} catch (error) {
+			console.error('Error deleting funeral booking:', error)
+			return { success: false, error: error.message || 'Failed to delete booking' }
+		}
+	}
+
+	const canDelete = (booking: any) => {
+		// Allow deletion for all bookings regardless of status
+		return booking ? true : false
 	}
 
 	// Watch para sa mga changes sa bookings especially kung naa na'y completion status
@@ -101,5 +118,7 @@ export function useFuneralHeader() {
 		getStatusText,
 		handleBookingClick,
 		isClickable,
+		deleteBooking,
+		canDelete,
 	}
 }

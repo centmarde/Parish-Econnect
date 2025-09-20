@@ -1,318 +1,435 @@
 <script setup>
-import { ref, computed } from 'vue'
-import VueDatePicker from '@vuepic/vue-datepicker'
-import '@vuepic/vue-datepicker/dist/main.css'
+import { ref, computed, onMounted, defineOptions } from 'vue'
+import ViewEventDialog from './ViewEventDialog.vue'
+import { useCalendarFetch } from '@/views/admin/composables/calendarFetch'
+import { EVENT_LEGEND } from '@/views/admin/utils/constants'
+import { CalendarView } from 'vue-simple-calendar'
+import 'vue-simple-calendar/dist/vue-simple-calendar.css'
+import '@/views/admin/styles/calendar-theme.css'
 
-// Props para sa calendar component
-const props = defineProps({
-  events: {
-    type: Array,
-    default: () => []
-  },
-  variant: {
-    type: String,
-    default: 'default' // options: 'default', 'compact', 'monthly'
-  }
+// Component name for ESLint multi-word rule
+defineOptions({
+  name: 'CalendarWidget'
 })
 
-// Emit events para sa parent component
-const emit = defineEmits(['date-selected', 'event-clicked'])
+// Calendar composable
+const { loading, error, allEvents, fetchAllEvents } = useCalendarFetch()
 
-// Reactive data para sa selected date - read-only range view
-const _start = new Date()
-const _end = new Date()
-_end.setDate(_end.getDate() + 7)
-const selectedDate = ref([_start, _end]) // Always range mode, read-only
+// Calendar state
+const calendarRef = ref(null)
+const showEventDialog = ref(false)
+const selectedEvent = ref(null)
+const displayPeriodUom = ref('month')
+const displayPeriodCount = ref(1)
+const startingDayOfWeek = ref(0) // Sunday = 0
+const currentPeriodStart = ref(new Date())
+
+// Calendar view options
+const calendarViews = [
+  { title: 'Month', value: 'month', icon: 'mdi-calendar-month' },
+  { title: 'Week', value: 'week', icon: 'mdi-calendar-week' }
+]
+
+const currentView = ref('month')
 
 // Computed properties
-const isCompact = computed(() => props.variant === 'compact')
-const isMonthly = computed(() => props.variant === 'monthly')
-
-// Methods para sa calendar interactions - read-only mode
-const handleEventClick = (event) => {
-  emit('event-clicked', event)
-}
-
-// Helper to format selected date(s) for display
-const formatDate = (d) => {
-  if (!d) return ''
-  return new Date(d).toLocaleDateString('en-US', {
-    weekday: 'short', year: 'numeric', month: 'short', day: 'numeric'
-  })
-}
-
-const selectedLabel = computed(() => {
-  const val = selectedDate.value
-  if (Array.isArray(val)) {
-    const [s, e] = val
-    return `${formatDate(s)} — ${formatDate(e)}`
-  }
-  return formatDate(val)
+const calendarEvents = computed(() => {
+  // Only show approved events for public view
+  return allEvents.value
+    .filter(event => event.status === 'approved')
+    .map(event => ({
+      id: event.id,
+      title: event.title,
+      startDate: new Date(event.startDate),
+      endDate: event.endDate ? new Date(event.endDate) : new Date(event.startDate),
+      classes: event.classes || [`event-${event.category}`],
+      style: {
+        backgroundColor: event.color,
+        color: getContrastYIQ(event.color)
+      },
+      // Keep original event data for dialog
+      originalEvent: event
+    }))
 })
 
-// Calendar configuration - read-only range view
-const calendarConfig = computed(() => ({
-  inline: true,
-  autoApply: true,
-  enableTimePicker: false,
-  multiCalendars: isMonthly.value ? 2 : 1,
-  monthPicker: isCompact.value,
-  range: true, // Always range mode
-  readonly: true, // Make calendar read-only
-  disabled: false, // Keep interactions for viewing
-  clearable: false // Prevent clearing selection
-}))
+const displayPeriodLabel = computed(() => {
+  if (!currentPeriodStart.value) return ''
 
-// Format events para sa calendar markers
-const eventsForCalendar = computed(() => {
-  return props.events.map(event => ({
-    date: new Date(event.date),
-    highlight: true,
-    tooltip: event.title,
-    popover: {
-      label: event.title,
-      visibility: 'hover'
-    }
-  }))
+  const start = currentPeriodStart.value
+  const options = {
+    year: 'numeric',
+    month: 'long'
+  }
+
+  if (currentView.value === 'week') {
+    const end = new Date(start)
+    end.setDate(start.getDate() + 6)
+    return `${start.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${end.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`
+  }
+
+  return start.toLocaleDateString('en-US', options)
+})
+
+// Helper function to determine text color based on background
+const getContrastYIQ = (hexcolor) => {
+  if (!hexcolor) return '#000000'
+
+  const r = parseInt(hexcolor.substr(1,2),16)
+  const g = parseInt(hexcolor.substr(3,2),16)
+  const b = parseInt(hexcolor.substr(5,2),16)
+  const yiq = ((r*299)+(g*587)+(b*114))/1000
+  return (yiq >= 128) ? '#000000' : '#FFFFFF'
+}
+
+// Methods
+const handleEventClick = (event) => {
+  // Handle event click - show event details in view-only mode
+  console.log('Event clicked:', event)
+
+  // Save clicked event data to localStorage for ViewEventDialog access
+  const clickedEventData = {
+    clickedEvent: event,
+    originalEvent: event?.originalEvent,
+    timestamp: new Date().toISOString()
+  }
+
+  try {
+    localStorage.setItem('clicked_event_data', JSON.stringify(clickedEventData))
+    console.log('Saved clicked event data to localStorage:', clickedEventData)
+  } catch (error) {
+    console.warn('Failed to save clicked event data to localStorage:', error)
+  }
+
+  selectedEvent.value = event
+  showEventDialog.value = true
+}
+
+const changeView = (view) => {
+  currentView.value = view
+
+  switch (view) {
+    case 'month':
+      displayPeriodUom.value = 'month'
+      displayPeriodCount.value = 1
+      break
+    case 'week':
+      displayPeriodUom.value = 'week'
+      displayPeriodCount.value = 1
+      break
+  }
+}
+
+const goToToday = () => {
+  currentPeriodStart.value = new Date()
+}
+
+const goToPreviousPeriod = () => {
+  const current = new Date(currentPeriodStart.value)
+
+  switch (currentView.value) {
+    case 'month':
+      current.setMonth(current.getMonth() - 1)
+      break
+    case 'week':
+      current.setDate(current.getDate() - 7)
+      break
+  }
+
+  currentPeriodStart.value = current
+}
+
+const goToNextPeriod = () => {
+  const current = new Date(currentPeriodStart.value)
+
+  switch (currentView.value) {
+    case 'month':
+      current.setMonth(current.getMonth() + 1)
+      break
+    case 'week':
+      current.setDate(current.getDate() + 7)
+      break
+  }
+
+  currentPeriodStart.value = current
+}
+
+// Lifecycle
+onMounted(async () => {
+  await fetchAllEvents()
 })
 </script>
 
 <template>
-  <v-card class="ma-2" :elevation="2">
-    <v-card-title class="d-flex align-center pa-3 pa-sm-4">
-      <span class="text-h6 text-sm-h5 primary--text">
-        {{ isCompact ? 'Quick Date Range' : 'Event Calendar Range' }}
-      </span>
+  <v-card class="calendar-container" elevation="2" rounded="lg">
+    <!-- Calendar Header -->
+    <v-card-title class="d-flex align-center justify-space-between pa-6 bg-primary text-white">
+      <div class="d-flex align-center">
+        <v-icon size="32" class="me-3">mdi-calendar-multiple</v-icon>
+        <div>
+          <h2 class="text-h5 font-weight-bold mb-1">Parish Events Calendar</h2>
+          <p class="text-body-2 mb-0 opacity-90">View upcoming parish events</p>
+        </div>
+      </div>
     </v-card-title>
 
     <v-divider></v-divider>
 
-    <v-card-text class="pa-2 pa-sm-4">
-      <v-container fluid>
-        <v-row>
-          <v-col cols="12" :lg="isMonthly ? 12 : 8">
-            <!-- Main calendar component -->
-            <div class="calendar-wrapper">
-              <div class="selected-range-label mb-3" v-if="selectedLabel">
-                <v-chip size="small" variant="tonal" color="primary">
-                  <v-icon start size="x-small">mdi-calendar-range</v-icon>
-                  {{ selectedLabel }}
-                </v-chip>
-              </div>
-              <VueDatePicker
-                :model-value="selectedDate"
-                v-bind="calendarConfig"
-                :dark="false"
-                :highlighted="eventsForCalendar"
-                placeholder="Date range view"
-                class="custom-calendar"
-                :class="{ 'mobile-calendar': $vuetify.display.xs }"
-              />
-            </div>
-          </v-col>
+    <!-- Calendar Controls -->
+    <v-card-text class="pa-6 pb-0">
+      <div class="d-flex flex-column flex-sm-row align-center justify-space-between gap-4 mb-6">
+        <!-- Navigation Controls -->
+        <div class="d-flex align-center gap-2">
+          <v-btn
+            icon="mdi-chevron-left"
+            variant="outlined"
+            size="small"
+            @click="goToPreviousPeriod"
+          ></v-btn>
 
-          <v-col 
-            v-if="!isCompact && !isMonthly" 
-            cols="12" 
-            lg="4"
-            class="hidden-md-and-down"
+          <v-btn
+            color="primary"
+            variant="elevated"
+            class="mx-2"
+            @click="goToToday"
           >
-            <!-- Event list sidebar - hidden on mobile, shown as separate section -->
-            <v-card variant="outlined" class="pa-3">
-              <v-card-title class="text-h6 pb-2">
-                Upcoming Events
-              </v-card-title>
-              
-              <v-divider class="mb-3"></v-divider>
-              
-              <div v-if="props.events.length > 0">
-                <v-list density="compact">
-                  <v-list-item
-                    v-for="event in props.events.slice(0, 5)"
-                    :key="event.id"
-                    @click="handleEventClick(event)"
-                    class="mb-1"
-                  >
-                    <template #prepend>
-                      <v-icon :color="event.color || 'primary'" size="small">
-                        mdi-calendar-check
-                      </v-icon>
-                    </template>
-                    
-                    <v-list-item-title class="text-body-2">
-                      {{ event.title }}
-                    </v-list-item-title>
-                    
-                    <v-list-item-subtitle class="text-caption">
-                      {{ new Date(event.date).toLocaleDateString() }}
-                    </v-list-item-subtitle>
-                  </v-list-item>
-                </v-list>
-              </div>
-              
-              <v-alert 
-                v-else 
-                type="info" 
-                variant="tonal" 
-                density="compact"
-                class="text-caption"
-              >
-                No upcoming events scheduled
-              </v-alert>
-            </v-card>
-          </v-col>
-        </v-row>
+            Today
+          </v-btn>
 
-        <!-- Mobile events list - shown below calendar on mobile -->
-        <v-row v-if="!isCompact && !isMonthly" class="hidden-lg-and-up mt-2">
-          <v-col cols="12">
-            <v-expansion-panels variant="accordion">
-              <v-expansion-panel
-                title="Upcoming Events"
-                :text="`${props.events.length} events scheduled`"
-              >
-                <template #text>
-                  <div v-if="props.events.length > 0" class="pa-2">
-                    <v-chip
-                      v-for="event in props.events.slice(0, 8)"
-                      :key="event.id"
-                      :color="event.color || 'primary'"
-                      size="small"
-                      class="ma-1"
-                      @click="handleEventClick(event)"
-                    >
-                      <v-icon start size="x-small">mdi-calendar-check</v-icon>
-                      {{ event.title }}
-                    </v-chip>
-                  </div>
-                  <v-alert v-else type="info" variant="tonal" density="compact">
-                    No upcoming events scheduled
-                  </v-alert>
-                </template>
-              </v-expansion-panel>
-            </v-expansion-panels>
-          </v-col>
-        </v-row>
+          <v-btn
+            icon="mdi-chevron-right"
+            variant="outlined"
+            size="small"
+            @click="goToNextPeriod"
+          ></v-btn>
 
-        <!-- Selected date info -->
-        <v-row v-if="selectedDate" class="mt-2">
-          <v-col cols="12">
-            <v-alert 
-              type="success" 
-              variant="tonal" 
-              density="compact"
-              class="text-body-2"
+          <div class="ms-4">
+            <h3 class="text-h6 font-weight-medium">{{ displayPeriodLabel }}</h3>
+          </div>
+        </div>
+
+        <!-- View Toggle (Month/Week only for widget) -->
+        <div class="d-flex align-center gap-2">
+          <v-btn-toggle
+            v-model="currentView"
+            color="primary"
+            variant="outlined"
+            divided
+            mandatory
+          >
+            <v-btn
+              v-for="view in calendarViews"
+              :key="view.value"
+              :value="view.value"
+              size="small"
+              @click="changeView(view.value)"
             >
-              <v-icon class="me-2">mdi-calendar-today</v-icon>
-              Selected: {{ new Date(selectedDate).toLocaleDateString('en-US', { 
-                weekday: 'long', 
-                year: 'numeric', 
-                month: 'long', 
-                day: 'numeric' 
-              }) }}
-            </v-alert>
-          </v-col>
-        </v-row>
-      </v-container>
+              <v-icon :icon="view.icon" class="me-1"></v-icon>
+              <span class="d-none d-sm-inline">{{ view.title }}</span>
+            </v-btn>
+          </v-btn-toggle>
+        </div>
+      </div>
+
+      <!-- Event Legend -->
+      <div class="mb-6">
+        <div class="d-flex flex-wrap align-center gap-3">
+          <span class="text-subtitle-2 font-weight-medium me-2">Event Types:</span>
+          <v-chip
+            v-for="legend in EVENT_LEGEND"
+            :key="legend.label"
+            :color="legend.color"
+            size="small"
+            variant="tonal"
+            class="me-2 mb-1"
+          >
+            <v-icon :icon="legend.icon" class="me-1" size="16"></v-icon>
+            {{ legend.label }}
+          </v-chip>
+        </div>
+      </div>
     </v-card-text>
+
+    <!-- Loading State -->
+    <div v-if="loading" class="d-flex justify-center align-center pa-8">
+      <v-progress-circular
+        indeterminate
+        color="primary"
+        size="48"
+      ></v-progress-circular>
+      <span class="ms-4 text-subtitle-1">Loading calendar events...</span>
+    </div>
+
+    <!-- Error State -->
+    <v-alert
+      v-else-if="error"
+      type="error"
+      variant="tonal"
+      class="ma-6"
+    >
+      {{ error }}
+      <template #append>
+        <v-btn
+          color="error"
+          variant="text"
+          @click="fetchAllEvents"
+        >
+          Retry
+        </v-btn>
+      </template>
+    </v-alert>
+
+    <!-- Calendar View -->
+    <div v-else class="calendar-wrapper pa-6 pt-0">
+      <CalendarView
+        ref="calendarRef"
+        :show-date="currentPeriodStart"
+        :items="calendarEvents"
+        :display-period-uom="displayPeriodUom"
+        :display-period-count="displayPeriodCount"
+        :starting-day-of-week="startingDayOfWeek"
+        :enable-drag-drop="false"
+        :show-times="false"
+        :time-format-options="{ hour: 'numeric', minute: '2-digit' }"
+        class="theme-calendar calendar-large"
+        item-content-height="2.5rem"
+        @click-item="handleEventClick"
+      >
+      </CalendarView>
+    </div>
+
+    <!-- Empty State -->
+    <div
+      v-if="!loading && !error && calendarEvents.length === 0"
+      class="text-center pa-8"
+    >
+      <v-icon color="grey-lighten-1" size="64" class="mb-4">
+        mdi-calendar-blank
+      </v-icon>
+      <h3 class="text-h6 text-grey-darken-1 mb-2">No Events Scheduled</h3>
+      <p class="text-body-2 text-grey mb-4">
+        No approved events are currently scheduled. Check back later for updates.
+      </p>
+      <v-btn color="primary" variant="elevated" @click="fetchAllEvents">
+        Refresh Calendar
+      </v-btn>
+    </div>
   </v-card>
+
+  <!-- Event Details Dialog (View-Only) -->
+  <ViewEventDialog
+    v-model="showEventDialog"
+    :event="selectedEvent"
+    view-only
+  />
 </template>
 
 <style scoped>
 .calendar-wrapper {
-  width: 100%;
+  min-height: 600px;
+  height: 100%;
 }
 
-/* Custom styling para sa calendar na aligned sa Vuetify theme */
-:deep(.dp__main) {
-  font-family: 'Roboto', sans-serif;
+.calendar-large {
+  min-height: 600px;
+  height: 100%;
 }
 
-:deep(.dp__calendar_header) {
-  background-color: var(--v-theme-primary);
-  color: white;
+:deep(.cv-wrapper) {
+  border-radius: 8px;
+  overflow: hidden;
+  height: 100%;
+  min-height: 600px;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
 }
 
-:deep(.dp__calendar_header_item) {
-  color: white;
+:deep(.cv-weeks) {
+  flex: 1;
+  min-height: 0; /* Allow flexbox shrinking */
 }
 
-:deep(.dp__today) {
-  border: 2px solid var(--v-theme-primary);
+:deep(.cv-week) {
+  flex: 1;
+  display: flex;
+  flex-direction: row;
 }
 
-:deep(.dp__active_date) {
-  background-color: var(--v-theme-primary);
-  color: white;
+:deep(.cv-day) {
+  flex: 1;
+  min-height: 120px;
+  padding: 8px;
 }
 
-:deep(.dp__date_hover) {
-  background-color: var(--v-theme-primary-lighten-1);
-  color: white;
+:deep(.cv-header-day) {
+  background-color: rgb(var(--v-theme-surface-variant));
+  color: rgb(var(--v-theme-on-surface-variant));
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 1rem;
+  padding: 1rem 0;
+  min-height: 50px;
 }
 
-/* Enhanced mobile responsiveness */
-@media (max-width: 599px) {
+:deep(.cv-day) {
+  border-color: rgba(var(--v-border-color), var(--v-border-opacity));
+}
+
+:deep(.cv-day.today) {
+  background-color: rgba(var(--v-theme-primary), 0.08);
+}
+
+:deep(.cv-day-number) {
+  font-weight: 600;
+  color: rgb(var(--v-theme-on-surface));
+  font-size: 1.1rem;
+  padding: 4px 8px;
+}
+
+:deep(.cv-day.outsideOfMonth .cv-day-number) {
+  color: rgb(var(--v-theme-on-surface-variant));
+  opacity: 0.6;
+}
+
+.calendar-event {
+  border-radius: 6px;
+  padding: 4px 8px;
+  margin: 1px 0;
+  font-size: 0.75rem;
+  line-height: 1.2;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+}
+
+.calendar-event:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.16);
+}
+
+.event-title {
+  font-size: 0.75rem;
+  line-height: 1.2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.event-time {
+  font-size: 0.625rem;
+  opacity: 0.9;
+  margin-top: 2px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 600px) {
   .calendar-wrapper {
-    font-size: 0.875rem;
+    padding: 1rem;
   }
-  
-  :deep(.dp__calendar) {
-    font-size: 0.75rem;
-  }
-  
-  .mobile-calendar :deep(.dp__calendar_header) {
-    padding: 8px 4px;
-  }
-  
-  .mobile-calendar :deep(.dp__calendar_item) {
-    padding: 4px;
-    min-height: 32px;
-  }
-  
-  .mobile-calendar :deep(.dp__btn) {
-    padding: 4px 8px;
-    font-size: 0.75rem;
-  }
-  
-  .mobile-calendar :deep(.dp__calendar_row) {
-    margin: 2px 0;
-  }
-}
 
-@media (max-width: 479px) {
-  .calendar-wrapper {
-    font-size: 0.8rem;
-  }
-  
-  :deep(.dp__calendar) {
-    font-size: 0.7rem;
-  }
-  
-  .mobile-calendar :deep(.dp__calendar_item) {
-    padding: 2px;
-    min-height: 28px;
-    font-size: 0.7rem;
-  }
-  
-  .mobile-calendar :deep(.dp__btn) {
-    padding: 2px 6px;
-    font-size: 0.7rem;
-  }
-}
-
-/* Touch-friendly enhancements */
-@media (pointer: coarse) {
-  :deep(.dp__calendar_item) {
-    min-height: 44px; /* Minimum touch target size */
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-  
-  :deep(.dp__btn) {
-    min-height: 44px;
-    padding: 8px 12px;
+  :deep(.cv-header-day) {
+    font-size: 0.75rem;
+    padding: 0.5rem 0;
   }
 }
 </style>

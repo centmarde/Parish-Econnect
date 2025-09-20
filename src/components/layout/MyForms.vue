@@ -6,13 +6,36 @@ import { useWeddingHeader } from './weddingHeaderLayout/weddingHeader'
 import { useFuneralHeader } from './funeralHeaderLayout/funeralHeader'
 import { useThanksGivingHeader } from './thanksGivingLayout/thanksGiving'
 import { useBaptismHeader } from './baptism/baptismHeader'
+import FormDialog from './dialogs/FormDialog.vue'
+import {
+  BOOKING_CONSTANTS,
+  mergeAndSortBookings,
+  formatBookingDate,
+  getBookingStatusColor,
+  getBookingStatusText,
+  handleBookingClick as handleBookingClickHelper,
+  isBookingClickable,
+  getBookingTitle,
+  getBookingSubtitle,
+  getBookingIcon,
+  getBookingTypeLabel,
+  getReferenceId,
+  isBookingCompleted,
+  canDeleteBooking,
+  deleteBookingHandler
+} from './utils/helpers'
 
 const { mobile } = useDisplay()
 // const router = useRouter()
 
 // Pagination state
 const currentPage = ref(1)
-const itemsPerPage = ref(5)
+const itemsPerPage = ref(BOOKING_CONSTANTS.ITEMS_PER_PAGE)
+
+// Loading and dialog states for delete functionality
+const deleting = ref(false)
+const deleteDialog = ref(false)
+const bookingToDelete = ref(null)
 
 const {
   userBookings: weddingBookings,
@@ -20,7 +43,8 @@ const {
   getStatusColor: getWeddingStatusColor,
   getStatusText: getWeddingStatusText,
   handleBookingClick: handleWeddingClick,
-  isClickable: isWeddingClickable
+  isClickable: isWeddingClickable,
+  deleteBooking: deleteWeddingBooking
 } = useWeddingHeader()
 
 const {
@@ -29,7 +53,8 @@ const {
   getStatusColor: getFuneralStatusColor,
   getStatusText: getFuneralStatusText,
   handleBookingClick: handleFuneralClick,
-  isClickable: isFuneralClickable
+  isClickable: isFuneralClickable,
+  deleteBooking: deleteFuneralBooking
 } = useFuneralHeader()
 
 const {
@@ -38,7 +63,8 @@ const {
   getStatusColor: getThanksGivingStatusColor,
   getStatusText: getThanksGivingStatusText,
   handleBookingClick: handleThanksGivingClick,
-  isClickable: isThanksGivingClickable
+  isClickable: isThanksGivingClickable,
+  deleteBooking: deleteThanksGivingBooking
 } = useThanksGivingHeader()
 
 const {
@@ -47,51 +73,56 @@ const {
   getStatusColor: getBaptismStatusColor,
   getStatusText: getBaptismStatusText,
   handleBookingClick: handleBaptismClick,
-  isClickable: isBaptismClickable
+  isClickable: isBaptismClickable,
+  deleteBooking: deleteBaptismBooking
 } = useBaptismHeader()
 
-// Merge all bookings into one array with type indicators
+// Create handlers object for the helper functions
+const bookingHandlers = {
+  wedding: {
+    formatDate: formatWeddingDate,
+    getStatusColor: getWeddingStatusColor,
+    getStatusText: getWeddingStatusText,
+    handleBookingClick: handleWeddingClick,
+    isClickable: isWeddingClickable,
+    deleteBooking: deleteWeddingBooking
+  },
+  funeral: {
+    formatDate: formatFuneralDate,
+    getStatusColor: getFuneralStatusColor,
+    getStatusText: getFuneralStatusText,
+    handleBookingClick: handleFuneralClick,
+    isClickable: isFuneralClickable,
+    deleteBooking: deleteFuneralBooking
+  },
+  thanksgiving: {
+    formatDate: formatThanksGivingDate,
+    getStatusColor: getThanksGivingStatusColor,
+    getStatusText: getThanksGivingStatusText,
+    handleBookingClick: handleThanksGivingClick,
+    isClickable: isThanksGivingClickable,
+    deleteBooking: deleteThanksGivingBooking
+  },
+  baptism: {
+    formatDate: formatBaptismDate,
+    getStatusColor: getBaptismStatusColor,
+    getStatusText: getBaptismStatusText,
+    handleBookingClick: handleBaptismClick,
+    isClickable: isBaptismClickable,
+    deleteBooking: deleteBaptismBooking
+  }
+}
+
+// Merge all bookings into one array with type indicators using helper
 const allBookings = computed(() => {
-  const combined = []
+  const bookingsByType = {
+    wedding: weddingBookings.value,
+    funeral: funeralBookings.value,
+    thanksgiving: thanksGivingBookings.value,
+    baptism: baptismBookings.value
+  }
 
-  // Add wedding bookings with type indicator
-  weddingBookings.value.forEach(booking => {
-    combined.push({
-      ...booking,
-      bookingType: 'wedding',
-      sortDate: booking.wedding_date || booking.created_at
-    })
-  })
-
-  // Add funeral bookings with type indicator
-  funeralBookings.value.forEach(booking => {
-    combined.push({
-      ...booking,
-      bookingType: 'funeral',
-      sortDate: booking.funeral_date || booking.created_at
-    })
-  })
-
-  // Add thanksgiving bookings with type indicator
-  thanksGivingBookings.value.forEach(booking => {
-    combined.push({
-      ...booking,
-      bookingType: 'thanksgiving',
-      sortDate: booking.thanksgiving_date || booking.created_at
-    })
-  })
-
-  // Add baptism bookings with type indicator
-  baptismBookings.value.forEach(booking => {
-    combined.push({
-      ...booking,
-      bookingType: 'baptism',
-      sortDate: booking.baptism_date || booking.created_at
-    })
-  })
-
-  // Sort by date (most recent first)
-  return combined.sort((a, b) => new Date(b.sortDate) - new Date(a.sortDate))
+  return mergeAndSortBookings(bookingsByType)
 })
 
 // Pagination logic
@@ -103,122 +134,57 @@ const paginatedBookings = computed(() => {
   return allBookings.value.slice(start, end)
 })
 
-// Remove showPagination - pagination will always be visible
-
-// Helper functions for merged bookings
+// Helper functions using the imported utilities
 const formatDate = (booking) => {
-  if (booking.bookingType === 'wedding') {
-    return formatWeddingDate(booking.wedding_date)
-  } else if (booking.bookingType === 'funeral') {
-    return formatFuneralDate(booking.funeral_date)
-  } else if (booking.bookingType === 'baptism') {
-    return formatBaptismDate(booking.baptism_date)
-  } else {
-    return formatThanksGivingDate(booking.thanksgiving_date)
-  }
+  return formatBookingDate(booking, bookingHandlers)
 }
 
 const getStatusColor = (booking) => {
-  if (booking.bookingType === 'wedding') {
-    return getWeddingStatusColor(booking)
-  } else if (booking.bookingType === 'funeral') {
-    return getFuneralStatusColor(booking)
-  } else if (booking.bookingType === 'baptism') {
-    return getBaptismStatusColor(booking)
-  } else {
-    return getThanksGivingStatusColor(booking)
-  }
+  return getBookingStatusColor(booking, bookingHandlers)
 }
 
 const getStatusText = (booking) => {
-  if (booking.bookingType === 'wedding') {
-    return getWeddingStatusText(booking)
-  } else if (booking.bookingType === 'funeral') {
-    return getFuneralStatusText(booking)
-  } else if (booking.bookingType === 'baptism') {
-    return getBaptismStatusText(booking)
-  } else {
-    return getThanksGivingStatusText(booking)
-  }
+  return getBookingStatusText(booking, bookingHandlers)
 }
 
 const handleBookingClick = (booking) => {
-  if (booking.bookingType === 'wedding') {
-    handleWeddingClick(booking)
-  } else if (booking.bookingType === 'funeral') {
-    handleFuneralClick(booking)
-  } else if (booking.bookingType === 'baptism') {
-    handleBaptismClick(booking)
-  } else {
-    handleThanksGivingClick(booking)
-  }
+  handleBookingClickHelper(booking, bookingHandlers)
 }
 
 const isClickable = (booking) => {
-  if (booking.bookingType === 'wedding') {
-    return isWeddingClickable(booking)
-  } else if (booking.bookingType === 'funeral') {
-    return isFuneralClickable(booking)
-  } else if (booking.bookingType === 'baptism') {
-    return isBaptismClickable(booking)
-  } else {
-    return isThanksGivingClickable(booking)
-  }
+  return isBookingClickable(booking, bookingHandlers)
 }
 
-const getBookingTitle = (booking) => {
-  if (booking.bookingType === 'wedding') {
-    return `${booking.bride_firstname} & ${booking.groom_firstname}`
-  } else if (booking.bookingType === 'funeral') {
-    return `${booking.deceased_firstname} ${booking.deceased_lastname}`
-  } else if (booking.bookingType === 'baptism') {
-    return `${booking.child_firstname} ${booking.child_lastname}`
-  } else {
-    return booking.title || `${booking.participant_firstname} ${booking.participant_lastname}`
-  }
+const canDelete = (booking) => {
+  return canDeleteBooking(booking)
 }
 
-const getBookingSubtitle = (booking) => {
-  if (booking.bookingType === 'wedding') {
-    return `${booking.bride_firstname} ${booking.bride_lastname} - ${booking.groom_firstname} ${booking.groom_lastname}`
-  } else if (booking.bookingType === 'funeral') {
-    return 'Funeral Mass Booking'
-  } else if (booking.bookingType === 'baptism') {
-    return 'Baptism Mass Booking'
-  } else {
-    return 'Thanksgiving Mass Booking'
-  }
+const showDeleteDialog = (booking) => {
+  bookingToDelete.value = booking
+  deleteDialog.value = true
 }
 
-const getBookingIcon = (booking) => {
-  if (booking.bookingType === 'wedding') {
-    return 'mdi-heart'
-  } else if (booking.bookingType === 'funeral') {
-    return 'mdi-cross'
-  } else if (booking.bookingType === 'baptism') {
-    return 'mdi-water'
-  } else {
-    return 'mdi-bird'
-  }
-}
+const handleDelete = async () => {
+  if (!bookingToDelete.value) return
 
-const getBookingTypeLabel = (booking) => {
-  if (booking.bookingType === 'wedding') {
-    return 'Wedding Booking'
-  } else if (booking.bookingType === 'funeral') {
-    return 'Funeral Booking'
-  } else if (booking.bookingType === 'baptism') {
-    return 'Baptism Booking'
-  } else {
-    return 'Thanksgiving Booking'
-  }
-}
+  deleting.value = true
 
-const getReferenceId = (booking) => {
-  if ((booking.bookingType === 'wedding' || booking.bookingType === 'baptism') && booking.ref_number) {
-    return `Ref: ${booking.ref_number}`
+  try {
+    const result = await deleteBookingHandler(bookingToDelete.value, bookingHandlers)
+
+    if (result && result.success) {
+      // Reset pagination if current page has no items
+      if (paginatedBookings.value.length === 1 && currentPage.value > 1) {
+        currentPage.value = currentPage.value - 1
+      }
+    }
+  } catch (error) {
+    console.error('Error deleting booking:', error)
+  } finally {
+    deleting.value = false
+    deleteDialog.value = false
+    bookingToDelete.value = null
   }
-  return null
 }
 </script>
 
@@ -249,7 +215,7 @@ const getReferenceId = (booking) => {
           :total-visible="5"
           rounded="circle"
           color="primary"
-          class="pagination-custom"
+
           density="compact"
         />
       </div>
@@ -277,9 +243,7 @@ const getReferenceId = (booking) => {
           v-model="currentPage"
           :length="totalPages"
           :total-visible="3"
-          rounded="circle"
-          color="primary"
-          class="pagination-custom"
+
           density="compact"
           size="small"
         />
@@ -304,8 +268,7 @@ const getReferenceId = (booking) => {
         rounded="xl"
         elevation="1"
         hover
-        @click="handleBookingClick(booking)"
-        :disabled="!isClickable(booking)"
+        @click="isClickable(booking) ? handleBookingClick(booking) : null"
       >
         <template v-if="mobile">
           <div class="d-flex align-center mb-3">
@@ -315,10 +278,23 @@ const getReferenceId = (booking) => {
             <div class="flex-grow-1">
               <h4 class="text-subtitle-1 font-weight-medium">
                 {{ getBookingTitle(booking) }}
+                <v-icon v-if="isBookingCompleted(booking)" color="success" size="small" class="ml-1">
+                  mdi-check-circle
+                </v-icon>
               </h4>
               <p class="text-caption text-medium-emphasis ma-0">{{ getBookingTypeLabel(booking) }}</p>
-              <p v-if="getReferenceId(booking)" class="text-caption primary--text ma-0">{{ getReferenceId(booking) }}</p>
-              <p v-if="booking.comment" class="text-caption grey--text ma-0">{{ booking.comment }}</p>
+              <div v-if="getReferenceId(booking)" class="d-flex align-center mt-1">
+                <v-chip
+                  color="success"
+                  variant="tonal"
+                  size="x-small"
+                  prepend-icon="mdi-identifier"
+                  class="text-caption"
+                >
+                  {{ getReferenceId(booking) }}
+                </v-chip>
+              </div>
+              <p v-if="booking.comment" class="text-caption grey--text ma-0 mt-1">{{ booking.comment }}</p>
             </div>
             <v-chip
               :color="getStatusColor(booking)"
@@ -335,6 +311,17 @@ const getReferenceId = (booking) => {
               <v-icon color="primary" size="small" class="mr-2">mdi-calendar</v-icon>
               <span class="text-body-2">{{ formatDate(booking) }}</span>
             </div>
+            <div v-if="canDelete(booking)" class="d-flex align-center">
+              <v-btn
+                icon
+                size="small"
+                color="error"
+                variant="text"
+                @click.stop="showDeleteDialog(booking)"
+              >
+                <v-icon size="small">mdi-delete</v-icon>
+              </v-btn>
+            </div>
           </div>
         </template>
 
@@ -346,12 +333,25 @@ const getReferenceId = (booking) => {
                   <v-icon color="white" size="24">{{ getBookingIcon(booking) }}</v-icon>
                 </v-avatar>
                 <div>
-                  <h3 class="text-h6 font-weight-medium">
+                  <h3 class="text-h6 font-weight-medium d-flex align-center">
                     {{ getBookingTitle(booking) }} {{ booking.bookingType === 'wedding' ? 'Wedding' : booking.bookingType === 'funeral' ? 'Funeral' : booking.bookingType === 'baptism' ? 'Baptism' : 'Thanksgiving' }}
+                    <v-icon v-if="isBookingCompleted(booking)" color="success" size="small" class="ml-2">
+                      mdi-check-circle
+                    </v-icon>
                   </h3>
                   <p class="text-body-2 text-medium-emphasis ma-0">
                     {{ getBookingSubtitle(booking) }}
                   </p>
+                  <div v-if="getReferenceId(booking)" class="mt-1">
+                    <v-chip
+                      color="success"
+                      variant="tonal"
+                      size="small"
+                      prepend-icon="mdi-identifier"
+                    >
+                      {{ getReferenceId(booking) }}
+                    </v-chip>
+                  </div>
                 </div>
               </div>
             </v-col>
@@ -364,11 +364,22 @@ const getReferenceId = (booking) => {
             </v-col>
 
             <v-col cols="3" class="text-right">
-              <v-chip :color="getStatusColor(booking)" variant="flat" rounded="pill">
-                {{ getStatusText(booking) }}
-              </v-chip>
-              <div v-if="getReferenceId(booking)" class="text-caption mt-2">{{ getReferenceId(booking) }}</div>
-              <div v-if="booking.comment" class="text-caption grey--text mt-1">{{ booking.comment }}</div>
+              <div class="d-flex align-center justify-end mb-2">
+                <v-chip :color="getStatusColor(booking)" variant="flat" rounded="pill" class="mr-2">
+                  {{ getStatusText(booking) }}
+                </v-chip>
+                <v-btn
+                  v-if="canDelete(booking)"
+                  icon
+                  size="small"
+                  color="error"
+                  variant="text"
+                  @click.stop="showDeleteDialog(booking)"
+                >
+                  <v-icon size="small">mdi-delete</v-icon>
+                </v-btn>
+              </div>
+              <div v-if="booking.comment" class="text-caption grey--text">{{ booking.comment }}</div>
             </v-col>
           </v-row>
         </template>
@@ -399,6 +410,18 @@ const getReferenceId = (booking) => {
         Refresh
       </v-btn>
     </v-card>
+
+    <!-- Delete Confirmation Dialog -->
+    <FormDialog
+      v-model="deleteDialog"
+      :booking="bookingToDelete"
+      :loading="deleting"
+      title="Confirm Deletion"
+      confirm-text="Delete"
+      cancel-text="Cancel"
+      @confirm="handleDelete"
+      @cancel="bookingToDelete = null"
+    />
   </v-container>
 </template>
 

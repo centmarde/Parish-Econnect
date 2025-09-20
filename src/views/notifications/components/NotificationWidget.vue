@@ -126,7 +126,7 @@ const handleDelete = (event) => {
             </span>
 
             <!-- Action button if actionUrl exists -->
-            <v-btn
+        <!--     <v-btn
               v-if="notification.actionUrl"
               :color="getNotificationTypeColor(notification.type)"
               size="small"
@@ -135,7 +135,7 @@ const handleDelete = (event) => {
             >
               View Details
               <v-icon end icon="mdi-arrow-right" />
-            </v-btn>
+            </v-btn> -->
           </div>
         </v-col>
       </v-row>
