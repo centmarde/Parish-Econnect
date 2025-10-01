@@ -4,6 +4,7 @@ import { ref, onMounted } from 'vue'
 import { useAnnouncementsStore } from '@/stores/eventStore.js'
 import NavBar2 from '@/components/layout/NavBar2.vue'
 import AppBar from '@/components/layout/AppBar.vue'
+import ContactInformation from '@/views/admin/components/ContactInfomation.vue'
 
 const announcementsStore = useAnnouncementsStore()
 const tableFilters = ref({
@@ -123,6 +124,8 @@ onMounted(() => {
                   Book Now
                 </v-btn>
               </RouterLink>
+
+                <ContactInformation />
             </div>
           </v-col>
           <br />
@@ -131,6 +134,9 @@ onMounted(() => {
             <v-img src="gridpic.jpg" class="float-card"></v-img>
           </v-col>
         </v-row>
+
+
+
       </v-container>
 
       <AppBar />
