@@ -336,6 +336,27 @@ const attachedImages = computed(() => {
     })
   }
 
+  if (booking.attached_images_4) {
+    images.push({
+      url: booking.attached_images_4,
+      label: 'Attachment 4'
+    })
+  }
+
+  if (booking.attached_images_5) {
+    images.push({
+      url: booking.attached_images_5,
+      label: 'Attachment 5'
+    })
+  }
+
+  if (booking.attached_images_6) {
+    images.push({
+      url: booking.attached_images_6,
+      label: 'Attachment 6'
+    })
+  }
+
   return images
 })
 
