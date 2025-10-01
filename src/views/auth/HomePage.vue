@@ -4,6 +4,7 @@ import { ref, onMounted } from 'vue'
 import { useAnnouncementsStore } from '@/stores/eventStore.js'
 import NavBar2 from '@/components/layout/NavBar2.vue'
 import AppBar from '@/components/layout/AppBar.vue'
+import ContactInformation from '@/views/admin/components/ContactInfomation.vue'
 
 const announcementsStore = useAnnouncementsStore()
 const tableFilters = ref({
@@ -95,32 +96,37 @@ onMounted(() => {
 
           <v-col cols="12" md="6" class="position-relative">
             <!-- Headline Top Left -->
-            <h1 class="text-top text-uppercase" :class="mobile ? 'small-text' : 'large-text'">
-              Faith. Community. Worship.
-              <a class="typewrite" data-period="2000" data-type='["Welcome to our website!"]'>
-                <span class="wrap"></span>
-              </a>
-            </h1>
+            <div class="headline-container">
+              <h1 class="text-top text-uppercase" :class="mobile ? 'small-text' : 'large-text'">
+                Faith. Community. Worship.
+                <div class="typewriter-container">
+                  <a class="typewrite" data-period="2000" data-type='["Welcome to our website!"]'>
+                    <span class="wrap"></span>
+                  </a>
+                </div>
+              </h1>
+            </div>
 
             <!-- Centered Text & Button -->
+            <div class="content-container">
+              <p class="text-left" :class="smAndDown ? 'small-p text-center' : 'large-p'">
+                Easily book parish services and pick the perfect schedule for your special moment —
+                anytime, online.
+              </p>
 
-            <p class="text-left" :class="smAndDown ? 'small-p text-center' : 'large-p'">
-              Easily book parish services and pick the perfect schedule for your special moment —
-              anytime, online.
-            </p>
-            <br />
-            <br />
+              <RouterLink to="/book-event" class="router-link">
+                <v-btn
+                  class="btn-0 mt-4 rounded-pill button"
+                  size="x-large"
+                  variant="flat"
+                  :class="smAndDown ? 'small-header' : 'large-header'"
+                >
+                  Book Now
+                </v-btn>
+              </RouterLink>
 
-            <RouterLink to="/book-event" class="router-link">
-              <v-btn
-                class="btn-0 mt-4 rounded-pill button"
-                size="x-large"
-                variant="flat"
-                :class="smAndDown ? 'small-header' : 'large-header'"
-              >
-                Book Now
-              </v-btn></RouterLink
-            >
+                <ContactInformation />
+            </div>
           </v-col>
           <br />
 
@@ -128,6 +134,9 @@ onMounted(() => {
             <v-img src="gridpic.jpg" class="float-card"></v-img>
           </v-col>
         </v-row>
+
+
+
       </v-container>
 
       <AppBar />
@@ -272,6 +281,21 @@ p {
 
 .text-top {
   padding-bottom: 60px;
+}
+
+.headline-container {
+  min-height: 120px; /* Reserve space for the headline */
+  margin-bottom: 20px;
+}
+
+.typewriter-container {
+  height: 40px; /* Fixed height for typewriter text */
+  display: flex;
+  align-items: center;
+}
+
+.content-container {
+  margin-top: 20px;
 }
 
 .small-p {

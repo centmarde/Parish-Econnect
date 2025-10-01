@@ -48,7 +48,7 @@ const {
         <template v-if="mobile">
           <div class="d-flex align-center mb-3">
             <v-avatar color="primary" class="mr-3" size="40">
-              <v-icon color="white">mdi-heart</v-icon>
+              <v-icon color="white">mdi-church</v-icon>
             </v-avatar>
             <div class="flex-grow-1">
               <h4 class="text-subtitle-1 font-weight-medium">
@@ -81,14 +81,14 @@ const {
             <v-col cols="6">
               <div class="d-flex align-center">
                 <v-avatar color="primary" class="mr-3" size="48">
-                  <v-icon color="white" size="24">mdi-heart</v-icon>
+                  <v-icon color="white" size="24">mdi-church</v-icon>
                 </v-avatar>
                 <div>
                   <h3 class="text-h6 font-weight-medium">
                     {{ booking.participant_firstname }} {{ booking.participant_lastname }} Thanksgiving
                   </h3>
                   <p class="text-body-2 text-medium-emphasis ma-0">
-                    Thanks Giving Booking
+                    Thanksgiving Mass Booking
                   </p>
                 </div>
               </div>

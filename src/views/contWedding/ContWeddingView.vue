@@ -27,27 +27,45 @@ const selectedPdf = ref(
 
 // Loading state para sa downloads
 const downloadingPdf = ref('')
+const showFormatDialog = ref(false)
+const selectedDocument = ref(null)
 
-// PDF download functions; save selected PDF title to localStorage for reference
-const downloadPDF = async (pdfName, pdfTitle) => {
-  downloadingPdf.value = pdfName
-  
-  // Save ang chosen PDF title for future reference
+// Format selection dialog functions
+const openFormatDialog = (pdf) => {
+  selectedDocument.value = pdf
+  showFormatDialog.value = true
+}
+
+// Download function with format selection
+const downloadDocument = async (format) => {
+  if (!selectedDocument.value) return
+
+  const pdf = selectedDocument.value
+  const filename = format === 'pdf'
+    ? pdf.filename
+    : pdf.filename.replace('.pdf', '.docx')
+
+  downloadingPdf.value = pdf.filename
+
+  // Save ang chosen document title for future reference
   try {
     if (typeof window !== 'undefined' && window.localStorage) {
-      window.localStorage.setItem(LOCAL_PDF_KEY, pdfTitle || pdfName)
+      window.localStorage.setItem(LOCAL_PDF_KEY, pdf.name)
     }
-    selectedPdf.value = pdfTitle || pdfName
+    selectedPdf.value = pdf.name
   } catch (e) {
     // ignore localStorage errors (private mode, quota, etc.)
-    console.warn('Could not save selected PDF to localStorage', e)
+    console.warn('Could not save selected document to localStorage', e)
   }
+
+  // Close dialog
+  showFormatDialog.value = false
 
   // Simulate download delay para sa better UX
   setTimeout(() => {
     const link = document.createElement('a')
-    link.href = `/pdf/${pdfName}`
-    link.download = pdfName
+    link.href = format === 'pdf' ? `/pdf/${filename}` : `/docx/${filename}`
+    link.download = filename
     link.target = '_blank'
     document.body.appendChild(link)
     link.click()
@@ -86,21 +104,21 @@ const weddingPDFs = [
 
 // Computed para sa theme-aware styling
 const cardVariant = computed(() => theme.global.current.value.dark ? 'tonal' : 'elevated')
-const headerGradient = computed(() => 
-  theme.global.current.value.dark 
+const headerGradient = computed(() =>
+  theme.global.current.value.dark
     ? 'linear-gradient(135deg, #1E1E1E 0%, #2C2C2C 100%)'
     : 'linear-gradient(135deg, #1976D2 0%, #42A5F5 100%)'
 )
 </script>
 
 <template>
-  
-  
+
+
   <NavBar2>
     <template #content>
       <v-container class="pa-4" fluid>
         <!-- Header Section with gradient background -->
-        <v-card 
+        <v-card
           :variant="cardVariant"
           class="mb-6 overflow-hidden"
           :style="{ background: headerGradient }"
@@ -113,7 +131,7 @@ const headerGradient = computed(() =>
             >
               <v-icon size="48" color="primary">mdi-heart</v-icon>
             </v-avatar>
-            
+
             <h1 class="text-h4 font-weight-bold text-white mb-2">
               Wedding Documents
             </h1>
@@ -124,14 +142,14 @@ const headerGradient = computed(() =>
         </v-card>
 
         <!-- Info Alert -->
-        <v-alert 
-          type="info" 
-          variant="tonal" 
+        <v-alert
+          type="info"
+          variant="tonal"
           class="mb-6"
           prepend-icon="mdi-information-outline"
         >
           <v-alert-title class="text-h6 mb-2">Important Reminder</v-alert-title>
-          Please download and complete all required forms before your wedding appointment. 
+          Please download and complete all required forms before your wedding appointment.
           All documents must be properly filled out and submitted.
         </v-alert>
 
@@ -151,7 +169,7 @@ const headerGradient = computed(() =>
               :class="{ 'downloading': downloadingPdf === pdf.filename }"
               hover
               link
-              @click="downloadPDF(pdf.filename, pdf.name)"
+              @click="openFormatDialog(pdf)"
             >
               <v-card-text class="text-center pa-6">
                 <!-- Category chip -->
@@ -201,7 +219,7 @@ const headerGradient = computed(() =>
                     mdi-download
                   </v-icon>
                   <span class="ml-2 text-caption font-weight-medium">
-                    {{ downloadingPdf === pdf.filename ? 'Downloading...' : 'Download PDF' }}
+                    {{ downloadingPdf === pdf.filename ? 'Downloading...' : 'Choose Format' }}
                   </span>
                 </div>
               </v-card-text>
@@ -230,15 +248,80 @@ const headerGradient = computed(() =>
               <v-icon color="success" class="mr-3">mdi-check-circle</v-icon>
               <div>
                 <div class="text-subtitle-1 font-weight-medium">
-                  Recently Downloaded
+                  Document Downloaded
                 </div>
                 <div class="text-body-2 text-medium-emphasis">
-                  {{ selectedPdf }} - Keep this document handy for your appointment
+                  {{ selectedPdf }} has been downloaded successfully
                 </div>
               </div>
             </v-card-text>
           </v-card>
         </v-expand-transition>
+
+        <!-- Format Selection Dialog -->
+        <v-dialog v-model="showFormatDialog" max-width="500" persistent>
+          <v-card>
+            <v-card-title class="text-h5 pa-6 pb-4">
+              <v-icon class="mr-3" color="primary">mdi-file-download</v-icon>
+              Choose Document Format
+            </v-card-title>
+
+            <v-card-text class="pa-6 pt-0">
+              <p class="text-body-1 mb-4">
+                Select ang preferred format para sa document:
+                <strong>{{ selectedDocument?.name }}</strong>
+              </p>
+
+              <v-row class="mt-4">
+                <v-col cols="6">
+                  <v-card
+                    variant="outlined"
+                    hover
+                    link
+                    @click="downloadDocument('pdf')"
+                    class="text-center pa-4 format-card"
+                  >
+                    <v-avatar size="48" color="red" class="mb-3">
+                      <v-icon color="white" size="24">mdi-file-pdf-box</v-icon>
+                    </v-avatar>
+                    <h4 class="text-h6 font-weight-medium mb-2">PDF</h4>
+                    <p class="text-body-2 text-medium-emphasis mb-0">
+                      Portable Document Format
+                    </p>
+                  </v-card>
+                </v-col>
+
+                <v-col cols="6">
+                  <v-card
+                    variant="outlined"
+                    hover
+                    link
+                    @click="downloadDocument('docx')"
+                    class="text-center pa-4 format-card"
+                  >
+                    <v-avatar size="48" color="blue" class="mb-3">
+                      <v-icon color="white" size="24">mdi-file-word-box</v-icon>
+                    </v-avatar>
+                    <h4 class="text-h6 font-weight-medium mb-2">DOCX</h4>
+                    <p class="text-body-2 text-medium-emphasis mb-0">
+                      Microsoft Word Document
+                    </p>
+                  </v-card>
+                </v-col>
+              </v-row>
+            </v-card-text>
+
+            <v-card-actions class="pa-6 pt-0">
+              <v-spacer></v-spacer>
+              <v-btn
+                variant="text"
+                @click="showFormatDialog = false"
+              >
+                Cancel
+              </v-btn>
+            </v-card-actions>
+          </v-card>
+        </v-dialog>
 
         <!-- Additional Help Section -->
         <v-card variant="outlined" class="mt-6">
@@ -254,18 +337,18 @@ const headerGradient = computed(() =>
               >
                 Back
               </v-btn>
-              
+
               <v-btn
                 color="primary"
                 variant="flat"
                 prepend-icon="mdi-arrow-right-circle"
                 size="large"
-               
+
                 @click="continueToNext"
               >
                 Continue
                 <v-tooltip
-                
+
                   activator="parent"
                   location="top"
                 >
@@ -276,7 +359,7 @@ const headerGradient = computed(() =>
           </v-card-text>
         </v-card>
       </v-container>
-      
+
       <AppBar />
     </template>
   </NavBar2>
@@ -296,6 +379,16 @@ const headerGradient = computed(() =>
   transform: scale(0.98);
 }
 
+/* Format card hover effects */
+.format-card {
+  transition: all 0.2s ease-in-out;
+}
+
+.format-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
 /* Theme-aware animation */
 .v-card {
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -306,7 +399,7 @@ const headerGradient = computed(() =>
   .text-h4 {
     font-size: 1.5rem !important;
   }
-  
+
   .text-h6 {
     font-size: 1.1rem !important;
   }

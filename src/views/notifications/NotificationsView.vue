@@ -21,7 +21,7 @@ const {
   markAllAsRead,
   clearReadNotifications,
   deleteNotification,
-  fetchNotificationsFromDatabase,
+  // fetchNotificationsFromDatabase,
   loading,
   error
 } = useRealTimeNotifications()
@@ -63,11 +63,7 @@ const filteredNotifications = computed(() => {
 const filterOptions = [
   { value: 'all', title: 'All Notifications' },
   { value: 'unread', title: 'Unread' },
-  { value: 'read', title: 'Read' },
-  { value: 'success', title: 'Success' },
-  { value: 'warning', title: 'Warning' },
-  { value: 'error', title: 'Error' },
-  { value: 'info', title: 'Info' }
+  { value: 'read', title: 'Read' }
 ]
 
 // Function para sa handling notification click
@@ -149,7 +145,7 @@ onMounted(() => {
           </v-col>
 
           <v-col cols="12" md="3" class="d-flex align-center justify-end">
-            <v-btn
+           <!--  <v-btn
               color="primary"
               variant="text"
               size="small"
@@ -159,7 +155,7 @@ onMounted(() => {
               title="Refresh from database"
             >
               <v-icon icon="mdi-refresh" />
-            </v-btn>
+            </v-btn> -->
 
             <v-btn
               v-if="unreadCount && unreadCount > 0"

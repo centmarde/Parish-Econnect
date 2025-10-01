@@ -14,32 +14,32 @@ export function useCameraWeddingUpload() {
         const blob = await response.blob()
         return new File([blob], filename, { type: 'image/png' })
       }
-      
+
       // Check if it's a blob URL
       if (uri.startsWith('blob:')) {
         const response = await fetch(uri)
         const blob = await response.blob()
         return new File([blob], filename, { type: 'image/png' })
       }
-      
+
       // For regular HTTP URLs
       if (uri.startsWith('http')) {
         const response = await fetch(uri)
         const blob = await response.blob()
         return new File([blob], filename, { type: 'image/png' })
       }
-      
+
       // For file:// URLs or other local file URIs, try to convert to blob
       const canvas = document.createElement('canvas')
       const ctx = canvas.getContext('2d')
       const img = new Image()
-      
+
       return new Promise((resolve, reject) => {
         img.onload = () => {
           canvas.width = img.width
           canvas.height = img.height
           ctx?.drawImage(img, 0, 0)
-          
+
           canvas.toBlob((blob) => {
             if (blob) {
               resolve(new File([blob], filename, { type: 'image/png' }))
@@ -48,12 +48,12 @@ export function useCameraWeddingUpload() {
             }
           }, 'image/png')
         }
-        
+
         img.onerror = () => reject(new Error('Failed to load image'))
         img.crossOrigin = 'anonymous'
         img.src = uri
       })
-      
+
     } catch (error) {
       console.error('Error converting URI to file:', error)
       throw new Error(`Failed to process image: ${error.message}`)
@@ -84,7 +84,7 @@ export function useCameraWeddingUpload() {
 
         for (let i = 0; i < images.length; i++) {
           const imageItem = images[i]
-          
+
           // Handle both string URIs and objects with uri property
           let imageUri: string
           if (typeof imageItem === 'string') {
@@ -96,15 +96,15 @@ export function useCameraWeddingUpload() {
             console.warn(`Invalid image data at index ${i} para sa ${documentType}:`, imageItem)
             continue
           }
-          
+
           // Check if imageUri is valid
           if (!imageUri || typeof imageUri !== 'string') {
             console.warn(`Invalid image URI at index ${i} para sa ${documentType}:`, imageUri)
             continue
           }
-          
+
           console.log(`Processing image ${i + 1} para sa ${documentType}:`, imageUri.substring(0, 50) + '...')
-          
+
           // Create unique filename para sa image
           const timestamp = Date.now()
           const filename = `wedding_${recentBooking.id}_${documentType}_${i + 1}_${timestamp}.png`
@@ -161,8 +161,11 @@ export function useCameraWeddingUpload() {
       // Update wedding booking with uploaded image URLs
       const imageUrls = {
         attached_images_1: uploadedUrls['marriage_interview']?.join(',') || null,
-        attached_images_2: uploadedUrls['marriage_banns']?.join(',') || null, 
-        attached_images_3: uploadedUrls['jurisdiction_for_marriage']?.join(',') || null
+        attached_images_2: uploadedUrls['marriage_banns']?.join(',') || null,
+        attached_images_3: uploadedUrls['jurisdiction_for_marriage']?.join(',') || null,
+        attached_images_4: uploadedUrls['marriage_certificate']?.join(',') || null,
+        attached_images_5: uploadedUrls['baptismal_certificate']?.join(',') || null,
+        attached_images_6: uploadedUrls['confirmation_certificate']?.join(',') || null
       }
 
       const { data, error } = await supabase
@@ -185,8 +188,8 @@ export function useCameraWeddingUpload() {
       }
 
       console.log('Successfully uploaded and updated wedding booking with document images')
-      return { 
-        data: data[0], 
+      return {
+        data: data[0],
         uploadedUrls,
         totalUploaded: Object.values(uploadedUrls).flat().length,
         referenceNumber: refResult.referenceNumber || null

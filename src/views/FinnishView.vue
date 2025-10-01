@@ -17,10 +17,10 @@ const error = ref('')
 const loadReferenceNumber = async () => {
   try {
     isLoading.value = true
-    
+
     // Try to get reference number from recent booking
     const dbRefNumber = await weddingStore.getRecentBookingReferenceNumber()
-    
+
     if (dbRefNumber) {
       referenceNumber.value = dbRefNumber
       console.log('Using database reference number:', dbRefNumber)
@@ -84,33 +84,33 @@ onMounted(() => {
               <v-card class="ma-4 pa-4 " rounded="lg" flat>
                 <v-card-text class="text-center">
                   <div class="text-caption text-grey-darken-1 mb-1">Reference Number</div>
-                  
+
                   <!-- Loading state -->
                   <div v-if="isLoading" class="d-flex justify-center align-center py-2">
-                    <v-progress-circular 
-                      indeterminate 
-                      size="24" 
+                    <v-progress-circular
+                      indeterminate
+                      size="24"
                       color="primary"
                       class="me-2"
                     />
                     <span class="text-body-2 text-grey-darken-1">Loading reference number...</span>
                   </div>
-                  
+
                   <!-- Reference number display -->
                   <div v-else-if="referenceNumber && !error" class="text-h6 font-weight-bold text-primary">
                     {{ referenceNumber }}
                   </div>
-                  
+
                   <!-- Error state -->
                   <div v-else-if="error" class="text-body-2 text-error">
                     {{ error }}
                   </div>
-                  
+
                   <!-- Fallback -->
                   <div v-else class="text-body-2 text-grey-darken-1">
                     Reference number not available
                   </div>
-                  
+
                   <div class="text-caption text-grey-darken-1 mt-1">
                     I-save ni nga reference number para sa future reference
                   </div>
@@ -136,7 +136,7 @@ onMounted(() => {
                   size="large"
                   prepend-icon="mdi-calendar-check"
                   class="ma-2"
-                  to="/appointments"
+                  to="/book-event"
                 >
                   View Appointments
                 </v-btn>

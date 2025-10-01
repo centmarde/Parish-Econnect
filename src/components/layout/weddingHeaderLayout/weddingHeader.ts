@@ -24,15 +24,15 @@ export function useWeddingHeader() {
 		// Completed bookings (have ref number) are success
 		if (booking?.ref_number) {
 			return 'success'
-		} 
+		}
 		// Explicit denied state should be shown as error (red)
 		else if (booking?.is_denied === true) {
 			return 'error'
-		} 
+		}
 		// Approved but not yet completed
 		else if (booking?.is_approved === true) {
 			return 'success'
-		} 
+		}
 		// Explicit pending/false approval
 		else if (booking?.is_approved === false) {
 			return 'warning'
@@ -78,6 +78,21 @@ export function useWeddingHeader() {
 		return booking.is_approved === true
 	}
 
+	const deleteBooking = async (booking: any) => {
+		try {
+			const result = await weddingStore.deleteBooking(booking.id)
+			return result
+		} catch (error) {
+			console.error('Error deleting wedding booking:', error)
+			return { success: false, error: error.message || 'Failed to delete booking' }
+		}
+	}
+
+	const canDelete = (booking: any) => {
+		// Allow deletion for all bookings regardless of status
+		return booking ? true : false
+	}
+
 	// Watch para sa mga changes sa bookings especially kung naa na'y ref_number
 	watch(
 		() => weddingStore.bookings,
@@ -103,5 +118,7 @@ export function useWeddingHeader() {
 		getStatusText,
 		handleBookingClick,
 		isClickable,
+		deleteBooking,
+		canDelete,
 	}
 }

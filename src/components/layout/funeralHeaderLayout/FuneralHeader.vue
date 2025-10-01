@@ -37,13 +37,15 @@ const {
         :key="booking.id"
         :class="[
           mobile ? 'mb-3 pa-3' : 'mb-4 pa-4',
-          isClickable(booking) ? 'cursor-pointer' : ''
+          isClickable(booking) ? 'cursor-pointer' : 'disabled-card'
         ]"
         rounded="xl"
         elevation="1"
-        hover
+        :hover="isClickable(booking)"
         @click="handleBookingClick(booking)"
         :disabled="!isClickable(booking)"
+        :variant="!isClickable(booking) ? 'tonal' : 'elevated'"
+        :color="!isClickable(booking) ? 'grey-lighten-4' : undefined"
       >
         <template v-if="mobile">
           <div class="d-flex align-center mb-3">
@@ -63,6 +65,7 @@ const {
               variant="flat"
               size="small"
               rounded="pill"
+              :prepend-icon="(booking?.is_completed || booking?.ref_number) ? 'mdi-check-circle' : undefined"
             >
               {{ getStatusText(booking) }}
             </v-chip>
@@ -102,7 +105,12 @@ const {
             </v-col>
 
             <v-col cols="3" class="text-right">
-              <v-chip :color="getStatusColor(booking)" variant="flat" rounded="pill">
+              <v-chip
+                :color="getStatusColor(booking)"
+                variant="flat"
+                rounded="pill"
+                :prepend-icon="(booking?.is_completed || booking?.ref_number) ? 'mdi-check-circle' : undefined"
+              >
                 {{ getStatusText(booking) }}
               </v-chip>
               <div v-if="booking.ref_number" class="text-caption mt-2">REF: {{ booking.ref_number }}</div>
@@ -119,5 +127,16 @@ const {
 /* minimal styling; rely on Vuetify utilities */
 .cursor-pointer {
   cursor: pointer;
+}
+
+.disabled-card {
+  cursor: not-allowed;
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.disabled-card:hover {
+  transform: none !important;
+  box-shadow: none !important;
 }
 </style>

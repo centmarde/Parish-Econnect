@@ -9,6 +9,16 @@ const authStore = useAuthUserStore()
 const notificationStore = useNotificationStore()
 
 import { ref, computed } from 'vue'
+
+// Add missing onLogout function
+const onLogout = async () => {
+  try {
+    await authStore.logout()
+    // The auth store should handle the redirect
+  } catch (error) {
+    console.error('Logout error:', error)
+  }
+}
 const theme = ref(localStorage.getItem('theme') ?? 'light')
 
 const isDark = computed({
@@ -19,7 +29,8 @@ const isDark = computed({
   },
 })
 
-const isLoggedIn = ref(false)
+// Use reactive computed properties instead of async checks
+const isLoggedIn = computed(() => authStore.user !== null)
 const drawer = ref(false)
 
 function onClick() {
@@ -28,17 +39,29 @@ function onClick() {
 import { useDisplay } from 'vuetify'
 const { mobile, mdAndDown } = useDisplay()
 
-// Load Functions during component rendering
+// Navigation performance optimization
+const isNavigating = ref(false)
+import { useRouter } from 'vue-router'
+const router = useRouter()
+
+// Handle navigation start/end for performance optimization
+router.beforeEach(() => {
+  isNavigating.value = true
+})
+
+router.afterEach(() => {
+  isNavigating.value = false
+})
+
+// Load Functions during component rendering - optimized to avoid blocking
 onMounted(async () => {
-  isLoggedIn.value = await authStore.isAuthenticated()
+  // Only load notifications, auth state should already be available from router guard
   await notificationStore.loadStoredNotifications()
-  //isMobileLogged.value = mobile.value && isLoggedIn.value
-  //isDesktop.value = !mobile.value && (isLoggedIn.value || !isLoggedIn.value)
 })
 </script>
 
 <template>
-  <v-responsive class="border rounded">
+  <v-responsive class="border rounded" :class="{ 'no-animations': isNavigating }">
     <v-app :theme="theme">
       <v-app-bar
         class="px-6 navbar-main"
@@ -50,11 +73,11 @@ onMounted(async () => {
         <!-- LOGO + HEADER -->
         <div class="d-flex align-center logo-section">
           <div class="logo-container">
-            <v-img 
-              src="logo.png" 
-              :width="mobile ? '40px' : '50px'" 
-              class="me-3 logo-image" 
-              cover 
+            <v-img
+              src="logo.png"
+              :width="mobile ? '40px' : '50px'"
+              class="me-3 logo-image"
+              cover
             />
           </div>
           <div class="header-text-container">
@@ -71,8 +94,8 @@ onMounted(async () => {
         <div v-if="!mdAndDown" class="d-flex align-center nav">
           <div class="d-flex nav nav-items-container">
             <RouterLink to="/homepage" class="router-link">
-              <v-btn 
-                class="mr-3 nav-btn home-btn-nav" 
+              <v-btn
+                class="mr-3 nav-btn home-btn-nav"
                 variant="outlined"
                 size="large"
                 rounded="lg"
@@ -84,8 +107,8 @@ onMounted(async () => {
             </RouterLink>
 
             <RouterLink to="/book-event" class="router-link">
-              <v-btn 
-                class="mr-3 nav-btn book-event-btn" 
+              <v-btn
+                class="mr-3 nav-btn book-event-btn"
                 variant="elevated"
                 size="large"
                 rounded="lg"
@@ -99,8 +122,8 @@ onMounted(async () => {
 
             <!-- EVENTS TAB -->
             <RouterLink to="/events" class="router-link">
-              <v-btn 
-                class="mr-3 nav-btn events-btn" 
+              <v-btn
+                class="mr-3 nav-btn events-btn"
                 variant="outlined"
                 size="large"
                 rounded="lg"
@@ -121,8 +144,8 @@ onMounted(async () => {
                 offset-y="10"
                 class="notification-badge"
               >
-                <v-btn 
-                  class="mr-3 nav-btn notifications-btn" 
+                <v-btn
+                  class="mr-3 nav-btn notifications-btn"
                   variant="outlined"
                   size="large"
                   rounded="lg"
@@ -145,7 +168,7 @@ onMounted(async () => {
               rounded="xl"
               class="theme-toggle-btn"
             >
-              <v-icon 
+              <v-icon
                 :class="isDark ? 'theme-icon-rotate' : 'theme-icon-scale'"
                 size="20"
               >
@@ -170,8 +193,8 @@ onMounted(async () => {
             offset-y="5"
             class="mobile-notification-badge"
           >
-            <v-btn 
-              icon 
+            <v-btn
+              icon
               @click="drawer = !drawer"
               size="large"
               variant="outlined"
@@ -186,9 +209,9 @@ onMounted(async () => {
       </v-app-bar>
 
       <!-- ENHANCED MOBILE DRAWER MENU -->
-      <v-navigation-drawer 
-        v-model="drawer" 
-        temporary 
+      <v-navigation-drawer
+        v-model="drawer"
+        temporary
         location="right"
         class="mobile-drawer"
         width="300"
@@ -211,8 +234,8 @@ onMounted(async () => {
           </div>
 
           <!-- HOME -->
-          <v-list-item 
-            @click="drawer = false" 
+          <v-list-item
+            @click="drawer = false"
             class="mobile-nav-item"
             rounded="lg"
             color="primary"
@@ -226,8 +249,8 @@ onMounted(async () => {
           </v-list-item>
 
           <!-- BOOK EVENT -->
-          <v-list-item 
-            @click="drawer = false" 
+          <v-list-item
+            @click="drawer = false"
             class="mobile-nav-item"
             rounded="lg"
             color="primary"
@@ -241,8 +264,8 @@ onMounted(async () => {
           </v-list-item>
 
           <!-- EVENTS -->
-          <v-list-item 
-            @click="drawer = false" 
+          <v-list-item
+            @click="drawer = false"
             class="mobile-nav-item"
             rounded="lg"
             color="primary"
@@ -256,8 +279,8 @@ onMounted(async () => {
           </v-list-item>
 
           <!-- NOTIFICATIONS -->
-          <v-list-item 
-            @click="drawer = false" 
+          <v-list-item
+            @click="drawer = false"
             class="mobile-nav-item"
             rounded="lg"
             color="primary"
@@ -322,11 +345,13 @@ onMounted(async () => {
 /* ===== LOGO SECTION ===== */
 .logo-section {
   animation: slideInLeft 0.6s ease-out;
+  will-change: transform;
 }
 
 .logo-container {
   position: relative;
   transition: transform 0.3s ease;
+  will-change: transform;
 }
 
 .logo-container:hover {
@@ -368,16 +393,18 @@ onMounted(async () => {
 /* ===== NAVIGATION ITEMS ===== */
 .nav-items-container {
   animation: slideInDown 0.6s ease-out 0.2s both;
+  will-change: transform;
 }
 
 .nav-btn {
   position: relative;
   font-weight: 600;
   letter-spacing: 1px;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
   overflow: hidden;
   text-transform: none;
   min-width: 120px;
+  will-change: transform;
 }
 
 .nav-btn::before {
@@ -561,37 +588,37 @@ onMounted(async () => {
   transform: scale(1.02);
 }
 
-/* ===== ANIMATIONS ===== */
+/* ===== OPTIMIZED ANIMATIONS ===== */
 @keyframes slideInLeft {
   from {
     opacity: 0;
-    transform: translateX(-50px);
+    transform: translate3d(-50px, 0, 0);
   }
   to {
     opacity: 1;
-    transform: translateX(0);
+    transform: translate3d(0, 0, 0);
   }
 }
 
 @keyframes slideInDown {
   from {
     opacity: 0;
-    transform: translateY(-30px);
+    transform: translate3d(0, -30px, 0);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
+    transform: translate3d(0, 0, 0);
   }
 }
 
 @keyframes slideInRight {
   from {
     opacity: 0;
-    transform: translateX(50px);
+    transform: translate3d(50px, 0, 0);
   }
   to {
     opacity: 1;
-    transform: translateX(0);
+    transform: translate3d(0, 0, 0);
   }
 }
 
@@ -606,15 +633,15 @@ onMounted(async () => {
 }
 
 @keyframes notificationPulse {
-  0% { 
+  0% {
     transform: scale(1);
     box-shadow: 0 0 0 0 rgba(244, 67, 54, 0.7);
   }
-  70% { 
+  70% {
     transform: scale(1.1);
     box-shadow: 0 0 0 8px rgba(244, 67, 54, 0);
   }
-  100% { 
+  100% {
     transform: scale(1);
     box-shadow: 0 0 0 0 rgba(244, 67, 54, 0);
   }
@@ -676,6 +703,21 @@ onMounted(async () => {
   font-size: 14px;
   font-weight: 600;
   letter-spacing: 0.5px;
+}
+
+/* ===== PERFORMANCE OPTIMIZATIONS ===== */
+.no-animations * {
+  animation-duration: 0s !important;
+  transition-duration: 0s !important;
+}
+
+/* Reduce motion for users who prefer it */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 
 /* ===== DARK THEME ADJUSTMENTS ===== */

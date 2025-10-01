@@ -82,11 +82,11 @@ export const useWeddingStore = defineStore('weddingData', {
       return true
     },
 
-    // Fetch wedding bookings filtered by current user's ID  
+    // Fetch wedding bookings filtered by current user's ID
     async fetchUserWeddingBookings() {
       this.loading = true
       this.error = null
-      
+
       const user = await this.getUser()
       if (!user) {
         this.error = 'User not authenticated'
@@ -110,7 +110,7 @@ export const useWeddingStore = defineStore('weddingData', {
         // Update bookings array with user-specific data
         this.bookings = data || []
         console.log(`Naka-fetch na ang ${this.bookings.length} wedding bookings para sa user`)
-        
+
         this.loading = false
         return this.bookings
       } catch (err) {
@@ -189,6 +189,43 @@ export const useWeddingStore = defineStore('weddingData', {
       } catch (err) {
         this.error = err.message
         return null
+      }
+    },
+
+    // Delete a wedding booking
+    async deleteBooking(bookingId) {
+      this.loading = true
+      this.error = null
+
+      try {
+        // Get current user
+        const user = await this.getUser()
+        if (!user) {
+          this.error = 'User not authenticated'
+          return { success: false, error: 'User not authenticated' }
+        }
+
+        // Delete the booking (only allow user to delete their own bookings)
+        const { data, error } = await supabase
+          .from('wedding_bookings')
+          .delete()
+          .eq('id', bookingId)
+          .eq('user_id', user.id) // Ensure user can only delete their own bookings
+
+        if (error) {
+          this.error = error.message
+          return { success: false, error: error.message }
+        }
+
+        // Remove from local state
+        this.bookings = this.bookings.filter(booking => booking.id !== bookingId)
+
+        return { success: true, data }
+      } catch (err) {
+        this.error = err.message
+        return { success: false, error: err.message }
+      } finally {
+        this.loading = false
       }
     },
   },

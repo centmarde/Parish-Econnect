@@ -4,6 +4,7 @@ import { useWeddingStore } from '@/stores/weddingBookingData.js'
 import { useFuneralStore } from '@/stores/funeralBookingData.js'
 import { useThanksGivingStore } from '@/stores/thanksGivingBookingData.js'
 import { EVENT_CATEGORIES } from '../utils/constants'
+import { supabase } from '@/utils/supabase'
 
 export const useCalendarFetch = () => {
   const loading = ref(false)
@@ -14,6 +15,9 @@ export const useCalendarFetch = () => {
   const weddingStore = useWeddingStore()
   const funeralStore = useFuneralStore()
   const thanksgivingStore = useThanksGivingStore()
+
+  // Other events state
+  const otherEvents = ref([])
 
   // Transform booking data to calendar events (VCalendar compatible)
   const transformBookingToEvent = (booking: any, category: string) => {
@@ -57,10 +61,10 @@ export const useCalendarFetch = () => {
         eventEndTime = '11:00'
     }
 
-    console.warn('Processing booking:', { category, eventName, eventDate, eventTime, eventEndTime })
+    // console.warn('Processing booking:', { category, eventName, eventDate, eventTime, eventEndTime })
     // Ensure we have valid date
     if (!eventDate) {
-      console.warn('No event date found for booking:', booking)
+      // console.warn('No event date found for booking:', booking)
       return null
     }
 
@@ -88,11 +92,15 @@ export const useCalendarFetch = () => {
     // Determine status based on boolean fields
     let status = 'pending'
 
-    console.log('Booking approval status:', {
-      is_approved: booking.is_approved,
-      is_denied: booking.is_denied
-    })
-    if (booking.is_approved) {
+    // console.log('Booking approval status:', {
+    //   is_approved: booking.is_approved,
+    //   is_denied: booking.is_denied
+    // })
+
+    // Check if booking has ref_number and set status to complete
+    if (booking.ref_number) {
+      status = 'complete'
+    } else if (booking.is_approved) {
       status = 'approved'
     } else if (booking.is_denied) {
       status = 'denied'
@@ -116,12 +124,12 @@ export const useCalendarFetch = () => {
     const storageKey = `booking_transform_${category}_${booking.id}`
     try {
       localStorage.setItem(storageKey, JSON.stringify(transformationData))
-      console.log('Saved transformation data to localStorage:', storageKey, transformationData)
+      // console.log('Saved transformation data to localStorage:', storageKey, transformationData)
     } catch (error) {
-      console.warn('Failed to save transformation data to localStorage:', error)
+      // console.warn('Failed to save transformation data to localStorage:', error)
     }
 
-    console.error('Transforming booking:', { category, eventName, eventDate, eventTime, eventEndTime, startDate, endDate, status, booking })
+    // console.log('Transforming booking:', { category, eventName, eventDate, eventTime, eventEndTime, startDate, endDate, status, booking })
 
     // vue-simple-calendar compatible event structure
     return {
@@ -159,17 +167,109 @@ export const useCalendarFetch = () => {
     }
   }
 
+  // Transform other_events data to calendar events
+  const transformOtherEventToEvent = (otherEvent: any) => {
+    const categoryConfig = EVENT_CATEGORIES.OTHERS
+
+    // Use created_at date as the event date
+    const eventDate = otherEvent.created_at.split('T')[0]
+    const eventName = otherEvent.title || 'Other Event'
+
+    // Get time information
+    const eventTime = otherEvent.starting_time
+    const eventEndTime = otherEvent.ending_time
+
+    // Format date for calendar
+    let startDate = new Date(eventDate)
+    let endDate = new Date(eventDate)
+    let isAllDay = !eventTime && !eventEndTime
+
+    if (isAllDay) {
+      // All-day event
+      endDate.setDate(endDate.getDate() + 1)
+    } else {
+      // Timed event - use time data as-is
+      if (eventTime) {
+        const [startHours, startMinutes] = eventTime.split(':')
+        startDate.setHours(parseInt(startHours), parseInt(startMinutes), 0, 0)
+      }
+
+      if (eventEndTime) {
+        const [endHours, endMinutes] = eventEndTime.split(':')
+        endDate.setHours(parseInt(endHours), parseInt(endMinutes), 0, 0)
+      } else if (eventTime) {
+        // Default to 1 hour after start time if only start time provided
+        endDate.setHours(startDate.getHours() + 1, startDate.getMinutes(), 0, 0)
+      }
+    }
+
+    // vue-simple-calendar compatible event structure
+    return {
+      // Required fields for vue-simple-calendar
+      id: `other_${otherEvent.id}`,
+      title: eventName,
+      startDate: startDate,
+      endDate: endDate,
+      classes: ['event-others'], // CSS classes for styling
+
+      // Custom fields for our app
+      category: 'others',
+      color: categoryConfig?.color,
+      time: isAllDay ? null : eventTime,
+      allDay: isAllDay,
+      status: 'approved', // Other events are automatically approved
+
+      // Pass detailed event data for dialog access
+      eventName: eventName,
+      eventDate: eventDate,
+      eventTime: eventTime,
+      eventEndTime: eventEndTime,
+      description: otherEvent.description,
+      bookingData: {
+        id: otherEvent.id,
+        category: 'others',
+        is_approved: true,
+        is_denied: false,
+        status: 'approved'
+      },
+
+      // Additional metadata
+      details: otherEvent.description || eventName,
+      bookingId: otherEvent.id,
+      originalEvent: otherEvent
+    }
+  }
+
+  // Fetch other events from database
+  const fetchOtherEvents = async () => {
+    try {
+      const { data, error: fetchError } = await supabase
+        .from('other_events')
+        .select('*')
+        .order('created_at', { ascending: false })
+
+      if (fetchError) {
+        throw fetchError
+      }
+
+      otherEvents.value = data || []
+    } catch (err) {
+      console.error('Error fetching other events:', err)
+      otherEvents.value = []
+    }
+  }
+
   // Computed property for combined events
   const allEvents = computed(() => {
     const events = []
 
     // Debug: log booking counts from each store
-    console.log('Store booking counts:', {
-      baptism: baptismStore.bookings.length,
-      wedding: weddingStore.bookings.length,
-      funeral: funeralStore.bookings.length,
-      thanksgiving: thanksgivingStore.bookings.length
-    })
+    // console.log('Store booking counts:', {
+    //   baptism: baptismStore.bookings.length,
+    //   wedding: weddingStore.bookings.length,
+    //   funeral: funeralStore.bookings.length,
+    //   thanksgiving: thanksgivingStore.bookings.length
+    // })
 
     // Transform baptism bookings
     baptismStore.bookings.forEach(booking => {
@@ -195,7 +295,13 @@ export const useCalendarFetch = () => {
       if (event) events.push(event)
     })
 
-    console.log('Total transformed events:', events.length)
+    // Transform other events
+    otherEvents.value.forEach(otherEvent => {
+      const event = transformOtherEventToEvent(otherEvent)
+      if (event) events.push(event)
+    })
+
+    // console.log('Total transformed events:', events.length)
     return events.sort((a, b) => a.startDate.getTime() - b.startDate.getTime())
   })
 
@@ -205,21 +311,22 @@ export const useCalendarFetch = () => {
     error.value = ''
 
     try {
-      // Fetch from all booking stores in parallel
+      // Fetch from all booking stores and other events in parallel
       await Promise.all([
         baptismStore.fetchBookings(),
         weddingStore.fetchBookings(),
         funeralStore.fetchBookings(),
-        thanksgivingStore.fetchBookings()
+        thanksgivingStore.fetchBookings(),
+        fetchOtherEvents()
       ])
 
-      console.log('Naka-fetch na ang tanan events para sa calendar')
-      console.log('Total events created:', allEvents.value.length)
+      // console.log('Naka-fetch na ang tanan events para sa calendar')
+      // console.log('Total events created:', allEvents.value.length)
 
       // Debug: log first few events to check structure
-      if (allEvents.value.length > 0) {
-        console.log('Sample event structure:', allEvents.value[0])
-      }
+      // if (allEvents.value.length > 0) {
+      //   console.log('Sample event structure:', allEvents.value[0])
+      // }
     } catch (err) {
       error.value = err.message || 'Error fetching calendar events'
       console.error('Error fetching calendar events:', err)

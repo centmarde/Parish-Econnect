@@ -1,7 +1,9 @@
 import { supabase } from '@/utils/supabase'
+import { supabaseAdmin } from '@/utils/supabase'
 import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
 import { reactive } from 'vue'
+import { useRolesDataStore } from './rolesData'
 
 import {
   eventCategories,
@@ -23,6 +25,9 @@ import {
 } from '@/views/adminOld/functions/adminDashboard'
 
 export const useAuthUserStore = defineStore('authUser', () => {
+  // Initialize roles store for centralized role management
+  const rolesStore = useRolesDataStore()
+
   const notifications = ref([])
   const pendingBookings = ref([])
   const events = ref([])
@@ -71,10 +76,33 @@ export const useAuthUserStore = defineStore('authUser', () => {
   const authPages = ref([])
   const authBranchIds = ref([])
 
+  // Add a computed property for user state (for reactive UI components)
+  const user = computed(() => userData.value)
+
   // Getters
   // Computed Properties; Use for getting the state but not modifying its reactive state
   const userRole = computed(() => {
-    return userData.value?.is_admin ? 'Super Administrator' : userData.value.user_role
+    // Use rolesData store for centralized role management
+    const currentRole = rolesStore.getCurrentUserRole
+    return currentRole?.role || 'user'
+  })
+
+  // Role checking computed properties using rolesData store
+  const isCurrentUserAdmin = computed(() => {
+    return rolesStore.isCurrentUserAdmin
+  })
+
+  const isCurrentUserModerator = computed(() => {
+    return rolesStore.isCurrentUserModerator
+  })
+
+  const currentUserHasElevatedPrivileges = computed(() => {
+    return rolesStore.currentUserHasElevatedPrivileges
+  })
+
+  // Get current user role details
+  const getCurrentUserRoleDetails = computed(() => {
+    return rolesStore.getCurrentUserRole
   })
 
   // Reset State Action
@@ -82,6 +110,19 @@ export const useAuthUserStore = defineStore('authUser', () => {
     userData.value = null
     authPages.value = []
     authBranchIds.value = []
+  }
+
+  // Logout function
+  async function logout() {
+    try {
+      await supabase.auth.signOut()
+      $reset()
+      // Router navigation will be handled by auth state change
+      return true
+    } catch (error) {
+      console.error('Logout error:', error)
+      return false
+    }
   }
 
   // Actions
@@ -92,6 +133,9 @@ export const useAuthUserStore = defineStore('authUser', () => {
     if (data.session) {
       const { id, email, user_metadata } = data.session.user
       userData.value = { id, email, ...user_metadata }
+
+      // Load current user role from rolesData store
+      await rolesStore.getCurrentUserRoleFromAuth()
     }
 
     return !!data.session
@@ -155,6 +199,67 @@ export const useAuthUserStore = defineStore('authUser', () => {
 
       return { data: userData.value }
     }
+  }
+
+  // Get user email by user ID using admin client
+  async function getUserEmailById(userId) {
+    try {
+      const { data, error } = await supabaseAdmin.auth.admin.getUserById(userId)
+
+      if (error) {
+        console.error('Error fetching user by ID:', error)
+        return { error }
+      }
+
+      return {
+        data: {
+          email: data.user?.email,
+          user_metadata: data.user?.user_metadata
+        }
+      }
+    } catch (error) {
+      console.error('Error in getUserEmailById:', error)
+      return { error }
+    }
+  }
+
+  // Role-based access control functions using rolesData store
+  function checkUserRole(userId) {
+    return rolesStore.getUserRoleById(userId)
+  }
+
+  function isUserAdmin(userId) {
+    return rolesStore.isUserAdmin(userId)
+  }
+
+  function isUserModerator(userId) {
+    return rolesStore.isUserModerator(userId)
+  }
+
+  function hasUserElevatedPrivileges(userId) {
+    return rolesStore.hasElevatedPrivileges(userId)
+  }
+
+  // Current user role checking functions
+  function getCurrentUserRole() {
+    return rolesStore.getCurrentUserRole
+  }
+
+  async function refreshCurrentUserRole() {
+    return await rolesStore.getCurrentUserRoleFromAuth()
+  }
+
+  // Page access control based on roles
+  function canAccessAdminPages() {
+    return rolesStore.isCurrentUserAdmin
+  }
+
+  function canAccessModeratorPages() {
+    return rolesStore.isCurrentUserModerator || rolesStore.isCurrentUserAdmin
+  }
+
+  function canAccessUserPages() {
+    return !!userData.value // Just need to be authenticated
   }
 
   // Update User Profile Image
@@ -346,16 +451,34 @@ export const useAuthUserStore = defineStore('authUser', () => {
 
   return {
     userData,
+    user,
     userRole,
     authPages,
     authBranchIds,
     $reset,
+    logout,
     isAuthenticated,
     getUserInformation,
+    getUserEmailById,
     getAuthPages,
     getAuthBranchIds,
     updateUserInformation,
     updateUserImage,
+
+    // Role management functions integrated with rolesData store
+    isCurrentUserAdmin,
+    isCurrentUserModerator,
+    currentUserHasElevatedPrivileges,
+    getCurrentUserRoleDetails,
+    checkUserRole,
+    isUserAdmin,
+    isUserModerator,
+    hasUserElevatedPrivileges,
+    getCurrentUserRole,
+    refreshCurrentUserRole,
+    canAccessAdminPages,
+    canAccessModeratorPages,
+    canAccessUserPages,
 
     notifications,
     pendingBookings,

@@ -1,5 +1,6 @@
-import { /*getUserInformation,*/ supabase, isAuthenticated } from '@/utils/supabase'
+import { /*getUserInformation,*/ } from '@/utils/supabase'
 import { createRouter, createWebHistory } from 'vue-router'
+import { useAuthUserStore } from '@/stores/authUser'
 import LoginView from '@/views/auth/LoginView.vue'
 import HomePage from '@/views/auth/HomePage.vue'
 import BookEvent from '@/views/bookingEvents/BookEvent.vue'
@@ -22,6 +23,12 @@ import Notifications from '@/views/notifications/NotificationsView.vue'
 import Pending from '@/views/PendingView.vue'
 import WeddingContinue from '@/views/contWedding/ContWeddingView.vue'
 import WeddingContinue2 from '@/views/contWedding/CameraWeddingView.vue'
+import FuneralContinue from '@/views/contFuneral/ContFuneralView.vue'
+import FuneralContinue2 from '@/views/contFuneral/CameraFunderalView.vue'
+import ThanksGivingContinue from '@/views/contThanksGiving/ContThanksGivingView.vue'
+import ThanksGivingContinue2 from '@/views/contThanksGiving/CamerraThanksGivingView.vue'
+import BaptismContinue from '@/views/contBaptism/ContBaptismView.vue'
+import BaptismContinue2 from '@/views/contBaptism/CameraBaptismView.vue'
 import FinnishView from '@/views/FinnishView.vue'
 
 const router = createRouter({
@@ -78,6 +85,42 @@ const router = createRouter({
       path: '/wedding-mass-continue-2',
       name: 'wedding-mass-continue-2',
       component: WeddingContinue2,
+      meta: { requiresAuth: true, requiresUserMode: true },
+    },
+    {
+      path: '/funeral-mass-continue',
+      name: 'funeral-mass-continue',
+      component: FuneralContinue,
+      meta: { requiresAuth: true, requiresUserMode: true },
+    },
+    {
+      path: '/funeral-mass-continue-2',
+      name: 'funeral-mass-continue-2',
+      component: FuneralContinue2,
+      meta: { requiresAuth: true, requiresUserMode: true },
+    },
+    {
+      path: '/thanksgiving-mass-continue',
+      name: 'thanksgiving-mass-continue',
+      component: ThanksGivingContinue,
+      meta: { requiresAuth: true, requiresUserMode: true },
+    },
+    {
+      path: '/thanksgiving-mass-continue-2',
+      name: 'thanksgiving-mass-continue-2',
+      component: ThanksGivingContinue2,
+      meta: { requiresAuth: true, requiresUserMode: true },
+    },
+    {
+      path: '/baptism-mass-continue',
+      name: 'baptism-mass-continue',
+      component: BaptismContinue,
+      meta: { requiresAuth: true, requiresUserMode: true },
+    },
+    {
+      path: '/baptism-mass-continue-2',
+      name: 'baptism-mass-continue-2',
+      component: BaptismContinue2,
       meta: { requiresAuth: true, requiresUserMode: true },
     },
     {
@@ -176,11 +219,26 @@ const router = createRouter({
   ],
 })
 
+// Initialize auth state on app startup
+let authInitialized = false
+
 router.beforeEach(async (to) => {
-  const isLoggedIn = await isAuthenticated()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const authUserStore = useAuthUserStore()
+
+  // Only call isAuthenticated once on app startup, then use reactive state
+  if (!authInitialized) {
+    try {
+      await authUserStore.isAuthenticated()
+      authInitialized = true
+    } catch (error) {
+      console.error('Auth initialization error:', error)
+      // Fallback to logged out state
+      authInitialized = true
+    }
+  }
+
+  // Use reactive state instead of async method - with null safety
+  const isLoggedIn = authUserStore.user !== null && authUserStore.user !== undefined
 
   // Redirect to appropriate page if accessing home route
   if (to.name === 'home') {
@@ -202,56 +260,51 @@ router.beforeEach(async (to) => {
 
   // If logged in, prevent access to login or register pages
   if (isLoggedIn && (to.name === 'login' || to.name === 'register')) {
-    // Get the stored login mode to determine where to redirect
-    const loginMode = sessionStorage.getItem('loginMode') || 'user'
-    if (loginMode === 'admin') {
+    // Redirect based on user's actual role from rolesData store
+    const isAdmin = authUserStore.isCurrentUserAdmin
+    if (isAdmin) {
       return { name: 'admin-dashboard' }
     } else {
       return { name: 'homepage' }
     }
   }
 
-  let userRole = null
-  if (user) {
-    const { data: roleData } = await supabase
-      .from('user_roles')
-      .select('role')
-      .eq('user_id', user.id)
-      .single()
-    userRole = roleData?.role
-  }
+  // Use authUser store for role checking instead of direct database query
+  const isAdmin = authUserStore.isCurrentUserAdmin
 
-  const isAdmin = userRole === 'admin'
-  const loginMode = sessionStorage.getItem('loginMode') || 'user'
+  // Strict role separation - admins and users have separate page access
 
   // Check admin-only routes
   if (to.meta.requiresAdmin) {
-    if (!isLoggedIn || !isAdmin || loginMode !== 'admin') {
+    if (!isLoggedIn || !isAdmin) {
       return '/forbidden'
     }
   }
 
-  // Check user-mode-only routes
+  // Check user-mode-only routes - ONLY regular users can access these
   if (to.meta.requiresUserMode) {
-    if (loginMode === 'admin') {
+    if (!isLoggedIn) {
+      return '/forbidden'
+    }
+    // Block admins from accessing user-only pages
+    if (isAdmin) {
       return '/forbidden'
     }
   }
 
-  /*
-  // Check user if the user is logged in or not admin
-  if (isLoggedIn && !isAdmin) {
-    if (to.path.startsWith('/admin/users')) {
-      return { name: 'forbidden' }
+  // Additional role-based redirection for specific scenarios
+  if (isLoggedIn) {
+    // If admin tries to access homepage, redirect to admin dashboard
+    if (isAdmin && to.name === 'homepage') {
+      return { name: 'admin-dashboard' }
+    }
+
+    // If regular user tries to access any admin page, block them
+    if (!isAdmin && to.path.startsWith('/admin')) {
+      return '/forbidden'
     }
   }
 
-  // If not logged in, prevent access to system pages
-  if (!isLoggedIn && to.path.startsWith('/admin')) {
-    // redirect the user to the login page
-    return { name: 'login' }
-  }
-*/
   if (router.resolve(to).matched.length === 0) {
     return { name: 'page-not-found' }
   }

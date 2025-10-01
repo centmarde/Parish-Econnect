@@ -68,6 +68,25 @@ app.use(router)
 app.use(vuetify)
 app.use(Toast)
 
+// Initialize auth state and set up auth listener
+import { useAuthUserStore } from '@/stores/authUser'
+import { supabase } from '@/utils/supabase'
+
 router.isReady().then(() => {
   app.mount('#app')
+
+  // Set up auth state listener after app is mounted
+  supabase.auth.onAuthStateChange(async (event) => {
+    try {
+      const authStore = useAuthUserStore()
+
+      if (event === 'SIGNED_OUT') {
+        authStore.$reset()
+        router.push('/')
+      }
+      // For SIGNED_IN, let the isAuthenticated method handle state setting
+    } catch (error) {
+      console.error('Auth state change error:', error)
+    }
+  })
 })

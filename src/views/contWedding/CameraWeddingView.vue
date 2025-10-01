@@ -44,11 +44,42 @@ const weddingPDFs = [
   },
 ]
 
+// Additional required wedding documents
+const additionalWeddingPDFs = [
+  {
+    name: 'Marriage Certificate',
+    filename: 'marriage_certificate.pdf',
+    description: 'Official marriage certificate',
+    icon: 'mdi-certificate',
+    color: 'info',
+    category: 'Certificate',
+  },
+  {
+    name: 'Baptismal Certificate',
+    filename: 'baptismal_certificate.pdf',
+    description: 'Baptismal certificate ng mag-asawa',
+    icon: 'mdi-water',
+    color: 'cyan',
+    category: 'Certificate',
+  },
+  {
+    name: 'Confirmation Certificate',
+    filename: 'confirmation_certificate.pdf',
+    description: 'Confirmation certificate ng mag-asawa',
+    icon: 'mdi-cross',
+    color: 'purple',
+    category: 'Certificate',
+  },
+]
+
 // Reactive state para sa each PDF document images
 const documentImages = ref({
   marriage_interview: [],
   marriage_banns: [],
-  jurisdiction_for_marriage: []
+  jurisdiction_for_marriage: [],
+  marriage_certificate: [],
+  baptismal_certificate: [],
+  confirmation_certificate: []
 })
 
 // Convert filename to reactive key
@@ -58,7 +89,8 @@ const getDocumentKey = (filename) => {
 
 // Check if all required documents have images
 const allDocumentsHaveImages = computed(() => {
-  return weddingPDFs.every(pdf => {
+  const allPDFs = [...weddingPDFs, ...additionalWeddingPDFs]
+  return allPDFs.every(pdf => {
     const key = getDocumentKey(pdf.filename)
     return documentImages.value[key] && documentImages.value[key].length > 0
   })
@@ -71,8 +103,8 @@ const totalUploadedImages = computed(() => {
 
 // Computed para sa theme-aware styling
 const cardVariant = computed(() => theme.global.current.value.dark ? 'tonal' : 'elevated')
-const headerGradient = computed(() => 
-  theme.global.current.value.dark 
+const headerGradient = computed(() =>
+  theme.global.current.value.dark
     ? 'linear-gradient(135deg, #1E1E1E 0%, #2C2C2C 100%)'
     : 'linear-gradient(135deg, #1976D2 0%, #42A5F5 100%)'
 )
@@ -102,12 +134,12 @@ const continueToNext = async () => {
     }
 
     console.log('Documents submitted successfully:', result.data)
-    
+
     // Log reference number if generated
     if (result.referenceNumber) {
       console.log('Reference number generated:', result.referenceNumber)
     }
-    
+
     // Navigate to Finnish page where reference number will be displayed
     router.push('/finnish')
   } catch (error) {
@@ -133,12 +165,12 @@ const getDocumentImageCount = (filename) => {
 
 <template>
   <PreloaderView />
-  
+
   <NavBar2>
     <template #content>
       <v-container class="pa-4" fluid>
         <!-- Header Section with gradient background -->
-        <v-card 
+        <v-card
           :variant="cardVariant"
           class="mb-6 overflow-hidden"
           :style="{ background: headerGradient }"
@@ -151,7 +183,7 @@ const getDocumentImageCount = (filename) => {
             >
               <v-icon size="48" color="primary">mdi-camera-plus</v-icon>
             </v-avatar>
-            
+
             <h1 class="text-h4 font-weight-bold text-white mb-2">
               Document Photos
             </h1>
@@ -212,7 +244,7 @@ const getDocumentImageCount = (filename) => {
               <div class="text-subtitle-1 font-weight-medium">
                 Upload Progress
               </div>
-              <v-chip 
+              <v-chip
                 :color="allDocumentsHaveImages ? 'success' : 'primary'"
                 variant="tonal"
                 size="small"
@@ -220,102 +252,185 @@ const getDocumentImageCount = (filename) => {
                 {{ totalUploadedImages }} images uploaded
               </v-chip>
             </div>
-            
+
             <v-progress-linear
-              :model-value="(totalUploadedImages / weddingPDFs.length) * 100"
+              :model-value="(totalUploadedImages / (weddingPDFs.length + additionalWeddingPDFs.length)) * 100"
               :color="allDocumentsHaveImages ? 'success' : 'primary'"
               height="8"
               rounded
               class="mb-2"
             />
-            
+
             <div class="text-caption text-medium-emphasis">
-              {{ allDocumentsHaveImages ? 'All documents uploaded!' : `${weddingPDFs.length - Object.values(documentImages).filter(imgs => imgs.length > 0).length} documents remaining` }}
+              {{ allDocumentsHaveImages ? 'All documents uploaded!' : `${(weddingPDFs.length + additionalWeddingPDFs.length) - Object.values(documentImages).filter(imgs => imgs.length > 0).length} documents remaining` }}
             </div>
           </v-card-text>
         </v-card>
 
         <!-- Info Alert -->
-        <v-alert 
-          type="info" 
-          variant="tonal" 
+        <v-alert
+          type="info"
+          variant="tonal"
           class="mb-6"
           prepend-icon="mdi-information-outline"
         >
           <v-alert-title class="text-h6 mb-2">Instructions</v-alert-title>
-          Please take clear photos of your completed wedding documents. Each document should be uploaded separately and clearly visible. All images will be automatically converted to PNG format for consistent storage.
+          Please take clear photos of your completed wedding documents. Each document should be uploaded separately and clearly visible. All 6 documents are required before you can proceed. All images will be automatically converted to PNG format for consistent storage.
         </v-alert>
 
         <!-- Document Upload Sections -->
         <div class="document-sections">
-          <v-card
-            v-for="(pdf) in weddingPDFs"
-            :key="pdf.filename"
-            :variant="cardVariant"
-            class="mb-6"
-            :class="{ 'border-success': hasDocumentImages(pdf.filename) }"
-          >
-            <!-- Document Header -->
-            <v-card-title class="pa-4 d-flex align-center">
-              <v-avatar
-                :color="pdf.color"
-                size="48"
-                variant="tonal"
-                class="mr-4"
+          <!-- Primary Documents (3 columns) -->
+          <v-row class="mb-6">
+            <v-col
+              v-for="(pdf) in weddingPDFs"
+              :key="pdf.filename"
+              cols="12"
+              md="4"
+              sm="6"
+            >
+              <v-card
+                :variant="cardVariant"
+                class="h-100"
+                :class="{ 'border-success': hasDocumentImages(pdf.filename) }"
               >
-                <v-icon :color="pdf.color">{{ pdf.icon }}</v-icon>
-              </v-avatar>
-              
-              <div class="flex-grow-1">
-                <div class="text-h6 font-weight-medium">
-                  {{ pdf.name }}
-                </div>
-                <div class="text-body-2 text-medium-emphasis">
-                  {{ pdf.description }}
-                </div>
-              </div>
+                <!-- Document Header -->
+                <v-card-title class="pa-4 d-flex align-center">
+                  <v-avatar
+                    :color="pdf.color"
+                    size="40"
+                    variant="tonal"
+                    class="mr-3"
+                  >
+                    <v-icon :color="pdf.color" size="20">{{ pdf.icon }}</v-icon>
+                  </v-avatar>
 
-              <!-- Status indicator -->
-              <div class="text-right">
-                <v-chip
-                  v-if="hasDocumentImages(pdf.filename)"
-                  color="success"
-                  variant="tonal"
-                  size="small"
-                  prepend-icon="mdi-check"
-                  class="mb-1"
-                >
-                  Uploaded
-                </v-chip>
-                <v-chip
-                  v-else
-                  color="grey"
-                  variant="outlined"
-                  size="small"
-                  prepend-icon="mdi-upload"
-                  class="mb-1"
-                >
-                  Pending
-                </v-chip>
-                
-                <div v-if="hasDocumentImages(pdf.filename)" class="text-caption text-medium-emphasis">
-                  {{ getDocumentImageCount(pdf.filename) }} image{{ getDocumentImageCount(pdf.filename) !== 1 ? 's' : '' }}
-                </div>
-              </div>
-            </v-card-title>
+                  <div class="flex-grow-1">
+                    <div class="text-subtitle-1 font-weight-medium">
+                      {{ pdf.name }}
+                    </div>
+                    <div class="text-caption text-medium-emphasis">
+                      {{ pdf.description }}
+                    </div>
+                  </div>
 
-            <v-divider />
+                  <!-- Status indicator -->
+                  <div class="text-right">
+                    <v-chip
+                      v-if="hasDocumentImages(pdf.filename)"
+                      color="success"
+                      variant="tonal"
+                      size="x-small"
+                      prepend-icon="mdi-check"
+                    >
+                      ✓
+                    </v-chip>
+                    <v-chip
+                      v-else
+                      color="grey"
+                      variant="outlined"
+                      size="x-small"
+                      prepend-icon="mdi-upload"
+                    >
+                      -
+                    </v-chip>
+                  </div>
+                </v-card-title>
 
-            <!-- Camera Upload Component -->
-            <v-card-text class="pa-4">
-              <FormCamera
-                v-model="documentImages[getDocumentKey(pdf.filename)]"
-                :label="`${pdf.name} Images`"
-                :max-images="5"
-                :required="true"
-              />
-            </v-card-text>
-          </v-card>
+                <v-divider />
+
+                <!-- Camera Upload Component -->
+                <v-card-text class="pa-4">
+                  <FormCamera
+                    v-model="documentImages[getDocumentKey(pdf.filename)]"
+                    :label="`${pdf.name} Images`"
+                    :max-images="5"
+                    :required="true"
+                  />
+
+                  <div v-if="hasDocumentImages(pdf.filename)" class="text-caption text-medium-emphasis mt-2">
+                    {{ getDocumentImageCount(pdf.filename) }} image{{ getDocumentImageCount(pdf.filename) !== 1 ? 's' : '' }} uploaded
+                  </div>
+                </v-card-text>
+              </v-card>
+            </v-col>
+          </v-row>
+
+          <!-- Additional Documents (3 columns) -->
+          <v-row class="mb-6">
+            <v-col
+              v-for="(pdf) in additionalWeddingPDFs"
+              :key="pdf.filename"
+              cols="12"
+              md="4"
+              sm="6"
+            >
+              <v-card
+                :variant="cardVariant"
+                class="h-100"
+                :class="{ 'border-success': hasDocumentImages(pdf.filename) }"
+              >
+                <!-- Document Header -->
+                <v-card-title class="pa-4 d-flex align-center">
+                  <v-avatar
+                    :color="pdf.color"
+                    size="40"
+                    variant="tonal"
+                    class="mr-3"
+                  >
+                    <v-icon :color="pdf.color" size="20">{{ pdf.icon }}</v-icon>
+                  </v-avatar>
+
+                  <div class="flex-grow-1">
+                    <div class="text-subtitle-1 font-weight-medium">
+                      {{ pdf.name }}
+                    </div>
+                    <div class="text-caption text-medium-emphasis">
+                      {{ pdf.description }}
+                    </div>
+                  </div>
+
+                  <!-- Status indicator -->
+                  <div class="text-right">
+                    <v-chip
+                      v-if="hasDocumentImages(pdf.filename)"
+                      color="success"
+                      variant="tonal"
+                      size="x-small"
+                      prepend-icon="mdi-check"
+                    >
+                      ✓
+                    </v-chip>
+                    <v-chip
+                      v-else
+                      color="grey"
+                      variant="outlined"
+                      size="x-small"
+                      prepend-icon="mdi-upload"
+                    >
+                      -
+                    </v-chip>
+                  </div>
+                </v-card-title>
+
+                <v-divider />
+
+                <!-- Camera Upload Component -->
+                <v-card-text class="pa-4">
+                  <FormCamera
+                    v-model="documentImages[getDocumentKey(pdf.filename)]"
+                    :label="`${pdf.name} Images`"
+                    :max-images="5"
+                    :required="true"
+                  />
+
+                  <div v-if="hasDocumentImages(pdf.filename)" class="text-caption text-medium-emphasis mt-2">
+                    {{ getDocumentImageCount(pdf.filename) }} image{{ getDocumentImageCount(pdf.filename) !== 1 ? 's' : '' }} uploaded
+                  </div>
+                </v-card-text>
+              </v-card>
+            </v-col>
+          </v-row>
         </div>
 
         <!-- Submission Error Alert -->
@@ -344,17 +459,34 @@ const getDocumentImageCount = (filename) => {
             prepend-icon="mdi-alert-outline"
           >
             <v-alert-title class="text-h6 mb-2">Upload Required</v-alert-title>
-            Please upload images for all {{ weddingPDFs.length }} wedding documents before proceeding.
-            
-            <v-list density="compact" class="mt-3 bg-transparent">
-              <v-list-item
-                v-for="pdf in weddingPDFs.filter(p => !hasDocumentImages(p.filename))"
-                :key="pdf.filename"
-                prepend-icon="mdi-circle-small"
-                :title="pdf.name"
-                class="text-body-2 pl-0"
-              />
-            </v-list>
+            Please upload images for all {{ weddingPDFs.length + additionalWeddingPDFs.length }} wedding documents before proceeding.
+
+            <v-row class="mt-3">
+              <v-col cols="12" md="6">
+                <div class="text-subtitle-2 mb-2 text-primary">Primary Documents</div>
+                <v-list density="compact" class="bg-transparent">
+                  <v-list-item
+                    v-for="pdf in weddingPDFs.filter(p => !hasDocumentImages(p.filename))"
+                    :key="pdf.filename"
+                    prepend-icon="mdi-circle-small"
+                    :title="pdf.name"
+                    class="text-body-2 pl-0"
+                  />
+                </v-list>
+              </v-col>
+              <v-col cols="12" md="6">
+                <div class="text-subtitle-2 mb-2 text-primary">Additional Documents</div>
+                <v-list density="compact" class="bg-transparent">
+                  <v-list-item
+                    v-for="pdf in additionalWeddingPDFs.filter(p => !hasDocumentImages(p.filename))"
+                    :key="pdf.filename"
+                    prepend-icon="mdi-circle-small"
+                    :title="pdf.name"
+                    class="text-body-2 pl-0"
+                  />
+                </v-list>
+              </v-col>
+            </v-row>
           </v-alert>
         </v-expand-transition>
 
@@ -368,7 +500,7 @@ const getDocumentImageCount = (filename) => {
             prepend-icon="mdi-check-circle-outline"
           >
             <v-alert-title class="text-h6 mb-2">All Documents Uploaded!</v-alert-title>
-            Great! You've uploaded images for all required wedding documents. You can now proceed to the next step.
+            Great! You've uploaded images for all 6 required wedding documents. You can now proceed to the next step.
           </v-alert>
         </v-expand-transition>
 
@@ -385,7 +517,7 @@ const getDocumentImageCount = (filename) => {
               >
                 Back
               </v-btn>
-              
+
               <v-btn
                 color="primary"
                 variant="flat"
@@ -408,10 +540,10 @@ const getDocumentImageCount = (filename) => {
           </v-card-text>
         </v-card>
 
-   
+
       </v-container>
-      
-  
+
+
     </template>
   </NavBar2>
 </template>
@@ -445,7 +577,7 @@ const getDocumentImageCount = (filename) => {
   .text-h4 {
     font-size: 1.5rem !important;
   }
-  
+
   .text-h6 {
     font-size: 1.1rem !important;
   }
@@ -453,6 +585,37 @@ const getDocumentImageCount = (filename) => {
   .gap-3 {
     gap: 12px !important;
   }
+
+  /* Make document cards stack on mobile */
+  .document-sections .v-col {
+    margin-bottom: 16px;
+  }
+}
+
+/* Ensure equal height cards */
+.h-100 {
+  height: 100%;
+}
+
+/* Grid layout improvements */
+.document-sections .v-row {
+  margin-bottom: 0;
+}
+
+.document-sections .v-col {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Card hover effects for grid layout */
+.document-sections .v-card {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  flex: 1;
+}
+
+.document-sections .v-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
 }
 
 /* Ensure proper button spacing */

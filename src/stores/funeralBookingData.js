@@ -163,7 +163,7 @@ export const useFuneralStore = defineStore('funeralData', {
       this.selectedBookingId = id
     },
 
-    // Get reference (id) of recent booking for display (funeral schema has no ref_number)
+    // Get reference number ng recent booking para sa FinnishView display
     async getRecentBookingReferenceNumber() {
       const user = await this.getUser()
       if (!user) {
@@ -174,7 +174,7 @@ export const useFuneralStore = defineStore('funeralData', {
       try {
         const { data, error } = await supabase
           .from('funeral_bookings')
-          .select('id')
+          .select('ref_number')
           .eq('user_id', user.id)
           .order('created_at', { ascending: false })
           .limit(1)
@@ -184,12 +184,49 @@ export const useFuneralStore = defineStore('funeralData', {
           return null
         }
 
-        const id = data && data[0] ? data[0].id : null
-        console.log('Reference id nga na-fetch:', id)
-        return id
+        const refNumber = data && data[0] ? data[0].ref_number : null
+        console.log('Reference number nga na-fetch:', refNumber)
+        return refNumber
       } catch (err) {
         this.error = err.message
         return null
+      }
+    },
+
+    // Delete a funeral booking
+    async deleteBooking(bookingId) {
+      this.loading = true
+      this.error = null
+
+      try {
+        // Get current user
+        const user = await this.getUser()
+        if (!user) {
+          this.error = 'User not authenticated'
+          return { success: false, error: 'User not authenticated' }
+        }
+
+        // Delete the booking (only allow user to delete their own bookings)
+        const { data, error } = await supabase
+          .from('funeral_bookings')
+          .delete()
+          .eq('id', bookingId)
+          .eq('user_id', user.id) // Ensure user can only delete their own bookings
+
+        if (error) {
+          this.error = error.message
+          return { success: false, error: error.message }
+        }
+
+        // Remove from local state
+        this.bookings = this.bookings.filter(booking => booking.id !== bookingId)
+
+        return { success: true, data }
+      } catch (err) {
+        this.error = err.message
+        return { success: false, error: err.message }
+      } finally {
+        this.loading = false
       }
     },
   },
