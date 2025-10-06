@@ -4,7 +4,7 @@ import { ref, onMounted } from 'vue'
 import { useAnnouncementsStore } from '@/stores/eventStore.js'
 import NavBar2 from '@/components/layout/NavBar2.vue'
 import AppBar from '@/components/layout/AppBar.vue'
-import ContactInformation from '@/views/admin/components/ContactInfomation.vue'
+import ContactsWidget from '@/views/adminOld/components/ContactsWidget.vue'
 
 const announcementsStore = useAnnouncementsStore()
 const tableFilters = ref({
@@ -125,7 +125,7 @@ onMounted(() => {
                 </v-btn>
               </RouterLink>
 
-                <ContactInformation />
+              <ContactsWidget />
             </div>
           </v-col>
           <br />
@@ -289,6 +289,7 @@ p {
 }
 
 .typewriter-container {
+  margin-top: 1rem;
   height: 40px; /* Fixed height for typewriter text */
   display: flex;
   align-items: center;

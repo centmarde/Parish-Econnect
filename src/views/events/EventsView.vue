@@ -5,7 +5,7 @@ import PreloaderView from '@/components/layout/PreloaderView.vue'
 import Calendar from './components/CalendarWidget.vue'
 import calendarEvents from './data/calendarData'
 import AppBar from '@/components/layout/AppBar.vue'
-import MyForms from '@/components/layout/MyForms.vue'
+//import MyForms from '@/components/layout/MyForms.vue'
 // Use the shared calendar data (exported array)
 const events = ref(calendarEvents)
 
@@ -36,11 +36,11 @@ onMounted(() => {
     <template #content>
       <v-container fluid class="pa-2 pa-sm-4">
         <!-- Page header -->
-         <v-row>
+       <!--   <v-row>
             <v-col cols="12">
               <MyForms />
             </v-col>
-          </v-row>
+          </v-row> -->
 
         <!-- Notice about date conflicts -->
         <v-row>
@@ -81,84 +81,5 @@ onMounted(() => {
 </template>
 
 <style scoped>
-/* Mobile-first responsive enhancements */
-@media (max-width: 599px) {
-  /* Smaller padding and margins on mobile */
-  :deep(.v-card-title) {
-    font-size: 1.1rem !important;
-    line-height: 1.3;
-  }
-
-  :deep(.v-card-text) {
-    padding: 8px 12px !important;
-  }
-
-  /* Ensure button groups wrap properly on very small screens */
-  :deep(.v-btn-toggle) {
-    flex-wrap: wrap;
-  }
-
-  /* Touch-friendly button sizing */
-  :deep(.v-btn--size-x-small) {
-    min-height: 32px;
-    padding: 4px 8px;
-  }
-}
-
-@media (max-width: 479px) {
-  /* Extra small screens - more compact layout */
-  :deep(.v-container) {
-    padding: 8px !important;
-  }
-
-  :deep(.v-card) {
-    margin-bottom: 12px;
-  }
-
-  /* Smaller statistics numbers on very small screens */
-  :deep(.text-h5) {
-    font-size: 1.25rem !important;
-  }
-}
-
-/* Landscape orientation on mobile devices */
-@media (max-width: 959px) and (orientation: landscape) {
-  :deep(.v-row) {
-    margin-bottom: 8px;
-  }
-
-  /* Make better use of horizontal space in landscape */
-  :deep(.v-col) {
-    padding: 4px 8px;
-  }
-}
-
-/* Touch device enhancements */
-@media (pointer: coarse) {
-  /* Ensure all interactive elements are touch-friendly */
-  :deep(.v-btn),
-  :deep(.v-chip) {
-    min-height: 44px;
-    min-width: 44px;
-  }
-
-  :deep(.v-chip) {
-    padding: 8px 12px;
-    margin: 4px;
-  }
-
-  /* Larger tap targets for expansion panels */
-  :deep(.v-expansion-panel-title) {
-    min-height: 48px;
-    padding: 12px 16px;
-  }
-}
-
-/* High DPI screen adjustments */
-@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
-  :deep(.v-icon) {
-    /* Ensure icons render crispy on high DPI screens */
-    transform: translateZ(0);
-  }
-}
+/* Minimal scoped styles - Vuetify utilities handle responsiveness */
 </style>

@@ -17,6 +17,7 @@ export function useMembersManagement() {
   // Dialog states
   const memberDialog = ref(false)
   const addMemberDialog = ref(false)
+  const editMemberDialog = ref(false)
   const confirmDeleteDialog = ref(false)
   const memberToDelete = ref(null)
 
@@ -307,6 +308,60 @@ export function useMembersManagement() {
     console.log('selectedMember value:', selectedMember.value)
   }
 
+  // Edit member
+  const editMember = (member) => {
+    selectedMember.value = member
+    editMemberDialog.value = true
+  }
+
+  // Update member information
+  const updateMemberInfo = async (memberId, updateData) => {
+    try {
+      actionLoading.value = true
+
+      // Update user metadata using admin store
+      const result = await authAdmin.adminUpdateUser(memberId, {
+        email: updateData.email,
+        metadata: {
+          first_name: updateData.first_name,
+          last_name: updateData.last_name,
+          phone: updateData.phone
+        },
+        emailConfirm: true
+      })
+
+      if (!result.success) {
+        throw new Error(result.error?.message || 'Failed to update user')
+      }
+
+      // Update user role if changed
+      if (updateData.role) {
+        const { error: roleError } = await supabase
+          .from('user_roles')
+          .update({ role: updateData.role })
+          .eq('user_id', memberId)
+
+        if (roleError) throw roleError
+      }
+
+      authUser.addNotification({
+        message: 'Member updated successfully',
+        type: 'success'
+      })
+
+      editMemberDialog.value = false
+      await loadMembers()
+    } catch (error) {
+      console.error('Error updating member:', error)
+      authUser.addNotification({
+        message: error.message || 'Failed to update member',
+        type: 'error'
+      })
+    } finally {
+      actionLoading.value = false
+    }
+  }
+
   // Update member role
   const updateMemberRole = async (memberId, newRole) => {
     try {
@@ -500,6 +555,7 @@ export function useMembersManagement() {
     selectedMember,
     memberDialog,
     addMemberDialog,
+    editMemberDialog,
     confirmDeleteDialog,
     memberToDelete,
     searchQuery,
@@ -527,6 +583,8 @@ export function useMembersManagement() {
     loadMembers,
     refreshMembers,
     viewMemberDetails,
+    editMember,
+    updateMemberInfo,
     updateMemberRole,
     addMember,
     deleteMember,

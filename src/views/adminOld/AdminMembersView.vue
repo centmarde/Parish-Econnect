@@ -1,9 +1,19 @@
 <script setup>
+import { provide } from 'vue'
 import { useMembersManagement } from './composables/membersManagement.js'
 import AdminHeader from '@/components/layout/AdminHeader.vue'
 import PreloaderView from '@/components/layout/PreloaderView.vue'
 import MembersTable from './components/MembersTable.vue'
+import ShowMembers from './components/ShowMembers.vue'
+import EditMember from './components/EditMember.vue'
+import DeleteMembers from './components/DeleteMembers.vue'
 
+
+// Create the composable instance once
+const membersManagement = useMembersManagement()
+
+// Provide it to all child components
+provide('membersManagement', membersManagement)
 
 // Destructure all needed properties and methods from the composable
 const {
@@ -15,7 +25,7 @@ const {
   paginatedMembers,
   roleOptions,
   refreshMembers,
-} = useMembersManagement()
+} = membersManagement
 </script>
 
 <template>
@@ -95,6 +105,11 @@ const {
 
         <!-- Members Table Component -->
         <MembersTable />
+
+        <!-- Dialog Components -->
+        <ShowMembers />
+        <EditMember />
+        <DeleteMembers />
 
       </v-container>
     </template>

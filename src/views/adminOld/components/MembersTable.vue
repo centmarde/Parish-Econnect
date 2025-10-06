@@ -1,5 +1,8 @@
 <script setup>
-import { useMembersManagement } from '../composables/membersManagement.js'
+import { inject } from 'vue'
+
+// Inject the shared composable instance from parent
+const membersManagement = inject('membersManagement')
 
 // Destructure needed properties and methods from the composable
 const {
@@ -11,10 +14,11 @@ const {
   page,
   totalPages,
   viewMemberDetails,
+  editMember,
   updateMemberRole,
   confirmDelete,
   getRoleColor
-} = useMembersManagement()
+} = membersManagement
 </script>
 
 <template>
@@ -113,8 +117,7 @@ const {
                       variant="text"
                       size="small"
                       color="primary"
-                      disabled
-                      @click="viewMemberDetails(item)"
+                      @click.stop="viewMemberDetails(item)"
                     />
                   </template>
                 </v-tooltip>
@@ -128,12 +131,17 @@ const {
                           icon="mdi-dots-vertical"
                           variant="text"
                           size="small"
-                          disabled
                         />
                       </template>
                     </v-tooltip>
                   </template>
                   <v-list density="compact">
+                    <v-list-item @click="editMember(item)">
+                      <template #prepend>
+                        <v-icon>mdi-pencil</v-icon>
+                      </template>
+                      <v-list-item-title>Edit Member</v-list-item-title>
+                    </v-list-item>
                     <v-list-item
                       @click="updateMemberRole(item.id, item.role === 'admin' ? 'user' : 'admin')"
                     >

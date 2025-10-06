@@ -1,5 +1,6 @@
 <script setup>
 import { ref, computed, onMounted, defineOptions } from 'vue'
+import { useDisplay } from 'vuetify'
 import ViewEventDialog from './ViewEventDialog.vue'
 import { useCalendarFetch } from '@/views/admin/composables/calendarFetch'
 import { EVENT_LEGEND } from '@/views/admin/utils/constants'
@@ -11,6 +12,9 @@ import '@/views/admin/styles/calendar-theme.css'
 defineOptions({
   name: 'CalendarWidget'
 })
+
+// Vuetify responsive composable
+const { xs, sm, mdAndUp, mobile } = useDisplay()
 
 // Calendar composable
 const { loading, error, allEvents, fetchAllEvents } = useCalendarFetch()
@@ -31,6 +35,49 @@ const calendarViews = [
 ]
 
 const currentView = ref('month')
+
+// Responsive computed properties using Vuetify's useDisplay
+const cardPadding = computed(() => {
+  if (xs.value) return 'pa-3'
+  if (sm.value) return 'pa-4'
+  return 'pa-6'
+})
+
+const headerPadding = computed(() => {
+  if (xs.value) return 'pa-4'
+  if (sm.value) return 'pa-5'
+  return 'pa-6'
+})
+
+const iconSize = computed(() => {
+  if (xs.value) return '24'
+  if (sm.value) return '28'
+  return '32'
+})
+
+const showViewLabels = computed(() => mdAndUp.value)
+
+const buttonSize = computed(() => {
+  if (mobile.value) return 'small'
+  return 'default'
+})
+
+const chipSize = computed(() => {
+  if (xs.value) return 'x-small'
+  if (sm.value) return 'small'
+  return 'small'
+})
+
+const headerTextClass = computed(() => {
+  if (xs.value) return 'text-h6'
+  if (sm.value) return 'text-h5'
+  return 'text-h5'
+})
+
+const subtitleClass = computed(() => {
+  if (xs.value) return 'text-caption'
+  return 'text-body-2'
+})
 
 // Computed properties
 const calendarEvents = computed(() => {
@@ -162,12 +209,12 @@ onMounted(async () => {
 <template>
   <v-card class="calendar-container" elevation="2" rounded="lg">
     <!-- Calendar Header -->
-    <v-card-title class="d-flex align-center justify-space-between pa-6 bg-primary text-white">
+    <v-card-title :class="['d-flex align-center justify-space-between bg-primary text-white', headerPadding]">
       <div class="d-flex align-center">
-        <v-icon size="32" class="me-3">mdi-calendar-multiple</v-icon>
+        <v-icon :size="iconSize" :class="xs ? 'me-2' : 'me-3'">mdi-calendar-multiple</v-icon>
         <div>
-          <h2 class="text-h5 font-weight-bold mb-1">Parish Events Calendar</h2>
-          <p class="text-body-2 mb-0 opacity-90">View upcoming parish events</p>
+          <h2 :class="[headerTextClass, 'font-weight-bold mb-1']">Parish Events Calendar</h2>
+          <p :class="[subtitleClass, 'mb-0 opacity-90']">View upcoming parish events</p>
         </div>
       </div>
     </v-card-title>
@@ -175,21 +222,22 @@ onMounted(async () => {
     <v-divider></v-divider>
 
     <!-- Calendar Controls -->
-    <v-card-text class="pa-6 pb-0">
-      <div class="d-flex flex-column flex-sm-row align-center justify-space-between gap-4 mb-6">
+    <v-card-text :class="[cardPadding, 'pb-0']">
+      <div :class="['d-flex align-center justify-space-between', mobile ? 'flex-column gap-3' : 'flex-row gap-4', xs ? 'mb-4' : 'mb-6']">
         <!-- Navigation Controls -->
-        <div class="d-flex align-center gap-2">
+        <div :class="['d-flex align-center', xs ? 'gap-1' : 'gap-2']">
           <v-btn
             icon="mdi-chevron-left"
             variant="outlined"
-            size="small"
+            :size="buttonSize"
             @click="goToPreviousPeriod"
           ></v-btn>
 
           <v-btn
             color="primary"
             variant="elevated"
-            class="mx-2"
+            :size="buttonSize"
+            :class="xs ? 'mx-1' : 'mx-2'"
             @click="goToToday"
           >
             Today
@@ -198,12 +246,14 @@ onMounted(async () => {
           <v-btn
             icon="mdi-chevron-right"
             variant="outlined"
-            size="small"
+            :size="buttonSize"
             @click="goToNextPeriod"
           ></v-btn>
 
-          <div class="ms-4">
-            <h3 class="text-h6 font-weight-medium">{{ displayPeriodLabel }}</h3>
+          <div :class="xs ? 'ms-2' : 'ms-4'">
+            <h3 :class="xs ? 'text-subtitle-1' : 'text-h6'" class="font-weight-medium">
+              {{ displayPeriodLabel }}
+            </h3>
           </div>
         </div>
 
@@ -215,48 +265,53 @@ onMounted(async () => {
             variant="outlined"
             divided
             mandatory
+            :density="xs ? 'compact' : 'default'"
           >
             <v-btn
               v-for="view in calendarViews"
               :key="view.value"
               :value="view.value"
-              size="small"
+              :size="buttonSize"
               @click="changeView(view.value)"
             >
-              <v-icon :icon="view.icon" class="me-1"></v-icon>
-              <span class="d-none d-sm-inline">{{ view.title }}</span>
+              <v-icon :icon="view.icon" :class="xs ? '' : 'me-1'" :size="xs ? '18' : '20'"></v-icon>
+              <span v-if="showViewLabels">{{ view.title }}</span>
             </v-btn>
           </v-btn-toggle>
         </div>
       </div>
 
       <!-- Event Legend -->
-      <div class="mb-6">
-        <div class="d-flex flex-wrap align-center gap-3">
-          <span class="text-subtitle-2 font-weight-medium me-2">Event Types:</span>
+      <div :class="xs ? 'mb-4' : 'mb-6'">
+        <div class="d-flex flex-wrap align-center gap-2">
+          <span :class="[xs ? 'text-caption' : 'text-subtitle-2', 'font-weight-medium', xs ? 'me-1' : 'me-2']">
+            Event Types:
+          </span>
           <v-chip
             v-for="legend in EVENT_LEGEND"
             :key="legend.label"
             :color="legend.color"
-            size="small"
+            :size="chipSize"
             variant="tonal"
-            class="me-2 mb-1"
+            :class="xs ? 'me-1 mb-1' : 'me-2 mb-1'"
           >
-            <v-icon :icon="legend.icon" class="me-1" size="16"></v-icon>
-            {{ legend.label }}
+            <v-icon :icon="legend.icon" :class="xs ? 'me-1' : 'me-1'" :size="xs ? '14' : '16'"></v-icon>
+            <span :class="xs ? 'text-caption' : ''">{{ legend.label }}</span>
           </v-chip>
         </div>
       </div>
     </v-card-text>
 
     <!-- Loading State -->
-    <div v-if="loading" class="d-flex justify-center align-center pa-8">
+    <div v-if="loading" :class="['d-flex justify-center align-center', xs ? 'pa-6' : 'pa-8']">
       <v-progress-circular
         indeterminate
         color="primary"
-        size="48"
+        :size="xs ? '40' : '48'"
       ></v-progress-circular>
-      <span class="ms-4 text-subtitle-1">Loading calendar events...</span>
+      <span :class="['ms-3', xs ? 'text-body-2' : 'text-subtitle-1']">
+        Loading calendar events...
+      </span>
     </div>
 
     <!-- Error State -->
@@ -264,13 +319,14 @@ onMounted(async () => {
       v-else-if="error"
       type="error"
       variant="tonal"
-      class="ma-6"
+      :class="xs ? 'ma-4' : 'ma-6'"
     >
       {{ error }}
       <template #append>
         <v-btn
           color="error"
           variant="text"
+          :size="buttonSize"
           @click="fetchAllEvents"
         >
           Retry
@@ -279,7 +335,7 @@ onMounted(async () => {
     </v-alert>
 
     <!-- Calendar View -->
-    <div v-else class="calendar-wrapper pa-6 pt-0">
+    <div v-else :class="['calendar-wrapper pt-0', cardPadding]">
       <CalendarView
         ref="calendarRef"
         :show-date="currentPeriodStart"
@@ -300,16 +356,23 @@ onMounted(async () => {
     <!-- Empty State -->
     <div
       v-if="!loading && !error && calendarEvents.length === 0"
-      class="text-center pa-8"
+      :class="['text-center', xs ? 'pa-6' : 'pa-8']"
     >
-      <v-icon color="grey-lighten-1" size="64" class="mb-4">
+      <v-icon color="grey-lighten-1" :size="xs ? '48' : '64'" :class="xs ? 'mb-3' : 'mb-4'">
         mdi-calendar-blank
       </v-icon>
-      <h3 class="text-h6 text-grey-darken-1 mb-2">No Events Scheduled</h3>
-      <p class="text-body-2 text-grey mb-4">
+      <h3 :class="[xs ? 'text-subtitle-1' : 'text-h6', 'text-grey-darken-1 mb-2']">
+        No Events Scheduled
+      </h3>
+      <p :class="[xs ? 'text-caption' : 'text-body-2', 'text-grey mb-4']">
         No approved events are currently scheduled. Check back later for updates.
       </p>
-      <v-btn color="primary" variant="elevated" @click="fetchAllEvents">
+      <v-btn
+        color="primary"
+        variant="elevated"
+        :size="buttonSize"
+        @click="fetchAllEvents"
+      >
         Refresh Calendar
       </v-btn>
     </div>
@@ -325,12 +388,10 @@ onMounted(async () => {
 
 <style scoped>
 .calendar-wrapper {
-  min-height: 600px;
   height: 100%;
 }
 
 .calendar-large {
-  min-height: 600px;
   height: 100%;
 }
 
@@ -338,7 +399,6 @@ onMounted(async () => {
   border-radius: 8px;
   overflow: hidden;
   height: 100%;
-  min-height: 600px;
   display: flex;
   flex-direction: column;
   flex: 1;
@@ -346,7 +406,7 @@ onMounted(async () => {
 
 :deep(.cv-weeks) {
   flex: 1;
-  min-height: 0; /* Allow flexbox shrinking */
+  min-height: 0;
 }
 
 :deep(.cv-week) {
@@ -357,8 +417,8 @@ onMounted(async () => {
 
 :deep(.cv-day) {
   flex: 1;
-  min-height: 120px;
-  padding: 8px;
+  min-height: 80px;
+  padding: 4px;
 }
 
 :deep(.cv-header-day) {
@@ -366,9 +426,52 @@ onMounted(async () => {
   color: rgb(var(--v-theme-on-surface-variant));
   font-weight: 600;
   text-transform: uppercase;
-  font-size: 1rem;
-  padding: 1rem 0;
-  min-height: 50px;
+  font-size: 0.875rem;
+  padding: 0.75rem 0;
+  min-height: 40px;
+}
+
+/* Responsive calendar adjustments */
+@media (min-width: 600px) {
+  .calendar-wrapper {
+    min-height: 500px;
+  }
+
+  :deep(.cv-wrapper) {
+    min-height: 500px;
+  }
+
+  :deep(.cv-day) {
+    min-height: 100px;
+    padding: 6px;
+  }
+
+  :deep(.cv-header-day) {
+    font-size: 0.9375rem;
+    padding: 0.875rem 0;
+    min-height: 45px;
+  }
+}
+
+@media (min-width: 960px) {
+  .calendar-wrapper {
+    min-height: 600px;
+  }
+
+  :deep(.cv-wrapper) {
+    min-height: 600px;
+  }
+
+  :deep(.cv-day) {
+    min-height: 120px;
+    padding: 8px;
+  }
+
+  :deep(.cv-header-day) {
+    font-size: 1rem;
+    padding: 1rem 0;
+    min-height: 50px;
+  }
 }
 
 :deep(.cv-day) {
@@ -382,8 +485,22 @@ onMounted(async () => {
 :deep(.cv-day-number) {
   font-weight: 600;
   color: rgb(var(--v-theme-on-surface));
-  font-size: 1.1rem;
-  padding: 4px 8px;
+  font-size: 0.875rem;
+  padding: 2px 4px;
+}
+
+@media (min-width: 600px) {
+  :deep(.cv-day-number) {
+    font-size: 1rem;
+    padding: 3px 6px;
+  }
+}
+
+@media (min-width: 960px) {
+  :deep(.cv-day-number) {
+    font-size: 1.1rem;
+    padding: 4px 8px;
+  }
 }
 
 :deep(.cv-day.outsideOfMonth .cv-day-number) {
@@ -392,14 +509,34 @@ onMounted(async () => {
 }
 
 .calendar-event {
-  border-radius: 6px;
-  padding: 4px 8px;
+  border-radius: 4px;
+  padding: 2px 4px;
   margin: 1px 0;
-  font-size: 0.75rem;
-  line-height: 1.2;
+  font-size: 0.625rem;
+  line-height: 1.1;
   cursor: pointer;
   transition: all 0.2s ease;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+@media (min-width: 600px) {
+  .calendar-event {
+    border-radius: 5px;
+    padding: 3px 6px;
+    font-size: 0.6875rem;
+    line-height: 1.15;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.11);
+  }
+}
+
+@media (min-width: 960px) {
+  .calendar-event {
+    border-radius: 6px;
+    padding: 4px 8px;
+    font-size: 0.75rem;
+    line-height: 1.2;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+  }
 }
 
 .calendar-event:hover {
@@ -408,28 +545,29 @@ onMounted(async () => {
 }
 
 .event-title {
-  font-size: 0.75rem;
-  line-height: 1.2;
+  font-size: inherit;
+  line-height: inherit;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .event-time {
-  font-size: 0.625rem;
+  font-size: 0.5625rem;
   opacity: 0.9;
-  margin-top: 2px;
+  margin-top: 1px;
 }
 
-/* Responsive adjustments */
-@media (max-width: 600px) {
-  .calendar-wrapper {
-    padding: 1rem;
+@media (min-width: 600px) {
+  .event-time {
+    font-size: 0.5938rem;
+    margin-top: 2px;
   }
+}
 
-  :deep(.cv-header-day) {
-    font-size: 0.75rem;
-    padding: 0.5rem 0;
+@media (min-width: 960px) {
+  .event-time {
+    font-size: 0.625rem;
   }
 }
 </style>
