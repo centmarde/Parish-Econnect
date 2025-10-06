@@ -6,7 +6,7 @@ import NavBar2 from '@/components/layout/NavBar2.vue'
 import PreloaderView from '@/components/layout/PreloaderView.vue'
 import NotificationWidget from './components/NotificationWidget.vue'
 import AppBar from '@/components/layout/AppBar.vue'
-import MyForms from '@/components/layout/MyForms.vue'
+//import MyForms from '@/components/layout/MyForms.vue'
 import { useRealTimeNotifications } from '@/views/notifications/composables/useRealTimeNotifications.js'
 
 const router = useRouter()
@@ -89,11 +89,11 @@ onMounted(() => {
   <NavBar2>
     <template #content>
       <v-container fluid class="pa-4">
-          <v-row>
+         <!--  <v-row>
             <v-col cols="12">
               <MyForms />
             </v-col>
-          </v-row>
+          </v-row> -->
         <!-- Header section -->
         <v-row class="mb-4">
           <v-col cols="12">

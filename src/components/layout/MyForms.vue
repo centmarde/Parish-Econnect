@@ -25,12 +25,20 @@ import {
   deleteBookingHandler
 } from './utils/helpers'
 
-const { mobile } = useDisplay()
+const { mobile, xs, smAndDown, mdAndUp, lgAndUp } = useDisplay()
 // const router = useRouter()
 
 // Pagination state
 const currentPage = ref(1)
 const itemsPerPage = ref(BOOKING_CONSTANTS.ITEMS_PER_PAGE)
+
+// Responsive computed values
+const cardSpacing = computed(() => xs.value ? 'mb-2 pa-2' : smAndDown.value ? 'mb-3 pa-3' : 'mb-4 pa-4')
+const avatarSize = computed(() => xs.value ? 36 : mobile.value ? 40 : 48)
+const iconSize = computed(() => xs.value ? 'small' : mobile.value ? 'small' : '24')
+const totalVisible = computed(() => xs.value ? 3 : smAndDown.value ? 5 : 7)
+const containerPadding = computed(() => xs.value ? 'pa-1' : smAndDown.value ? 'pa-2' : 'pa-4')
+const emptyStateIconSize = computed(() => xs.value ? 64 : mobile.value ? 80 : 96)
 
 // Loading and dialog states for delete functionality
 const deleting = ref(false)
@@ -189,14 +197,14 @@ const handleDelete = async () => {
 </script>
 
 <template>
-  <v-container :class="mobile ? 'pa-2' : 'pa-4'" fluid>
+  <v-container :class="containerPadding" fluid>
     <!-- Header with title and pagination controls -->
-    <div v-if="!mobile" class="d-flex align-center justify-space-between mb-4">
+    <div v-if="mdAndUp" class="d-flex align-center justify-space-between mb-4">
       <div class="d-flex align-center">
         <v-chip
           color="primary"
           variant="outlined"
-          size="small"
+          :size="lgAndUp ? 'default' : 'small'"
           prepend-icon="mdi-information"
         >
           MY BOOKINGS
@@ -208,48 +216,44 @@ const handleDelete = async () => {
 
       <!-- Pagination Controls - Desktop -->
       <div v-if="allBookings.length" class="d-flex align-center">
-
         <v-pagination
           v-model="currentPage"
           :length="totalPages"
-          :total-visible="5"
+          :total-visible="totalVisible"
           rounded="circle"
           color="primary"
-
           density="compact"
         />
       </div>
     </div>
 
-    <!-- Mobile Header Layout -->
-    <div v-if="mobile" class="mb-3">
+    <!-- Mobile/Tablet Header Layout -->
+    <div v-if="smAndDown" :class="xs ? 'mb-2' : 'mb-3'">
       <!-- Title Row -->
-      <div class="d-flex align-center justify-center mb-3">
+      <div class="d-flex align-center justify-center" :class="xs ? 'mb-2' : 'mb-3'">
         <v-chip
           color="primary"
           variant="outlined"
-          size="small"
+          :size="xs ? 'x-small' : 'small'"
           prepend-icon="mdi-information"
         >
           MY BOOKINGS
         </v-chip>
-
       </div>
 
-      <!-- Mobile Pagination Controls -->
-      <div v-if="allBookings.length" class="d-flex ms-2 flex-column align-center">
+      <!-- Mobile/Tablet Pagination Controls -->
+      <div v-if="allBookings.length" class="d-flex flex-column align-center">
         <!-- Pagination component -->
         <v-pagination
           v-model="currentPage"
           :length="totalPages"
-          :total-visible="3"
-
+          :total-visible="totalVisible"
           density="compact"
-          size="small"
+          :size="xs ? 'x-small' : 'small'"
         />
 
         <!-- Page info -->
-        <div class="text-caption text-medium-emphasis mt-1">
+        <div :class="xs ? 'text-caption' : 'text-body-2'" class="text-medium-emphasis mt-1">
           {{ ((currentPage - 1) * itemsPerPage + 1) }} -
           {{ Math.min(currentPage * itemsPerPage, allBookings.length) }}
           of {{ allBookings.length }}
@@ -257,12 +261,12 @@ const handleDelete = async () => {
       </div>
     </div>
 
-    <div v-if="allBookings.length" class="booking-list">
+        <div v-if="allBookings.length" class="booking-list">
       <v-card
         v-for="booking in paginatedBookings"
         :key="`${booking.bookingType}-${booking.id}`"
         :class="[
-          mobile ? 'mb-3 pa-3' : 'mb-4 pa-4',
+          cardSpacing,
           isClickable(booking) ? 'cursor-pointer' : ''
         ]"
         rounded="xl"
@@ -270,20 +274,20 @@ const handleDelete = async () => {
         hover
         @click="isClickable(booking) ? handleBookingClick(booking) : null"
       >
-        <template v-if="mobile">
-          <div class="d-flex align-center mb-3">
-            <v-avatar color="primary" class="mr-3" size="40">
-              <v-icon color="white">{{ getBookingIcon(booking) }}</v-icon>
+        <template v-if="smAndDown">
+          <div :class="xs ? 'mb-2' : 'mb-3'" class="d-flex align-center">
+            <v-avatar color="primary" :class="xs ? 'mr-2' : 'mr-3'" :size="avatarSize">
+              <v-icon color="white" :size="iconSize">{{ getBookingIcon(booking) }}</v-icon>
             </v-avatar>
             <div class="flex-grow-1">
-              <h4 class="text-subtitle-1 font-weight-medium">
+              <h4 :class="xs ? 'text-body-1' : 'text-subtitle-1'" class="font-weight-medium">
                 {{ getBookingTitle(booking) }}
                 <v-icon v-if="isBookingCompleted(booking)" color="success" size="small" class="ml-1">
                   mdi-check-circle
                 </v-icon>
               </h4>
               <p class="text-caption text-medium-emphasis ma-0">{{ getBookingTypeLabel(booking) }}</p>
-              <div v-if="getReferenceId(booking)" class="d-flex align-center mt-1">
+              <div v-if="getReferenceId(booking)" :class="xs ? 'mt-1' : 'mt-1'" class="d-flex align-center">
                 <v-chip
                   color="success"
                   variant="tonal"
@@ -294,12 +298,12 @@ const handleDelete = async () => {
                   {{ getReferenceId(booking) }}
                 </v-chip>
               </div>
-              <p v-if="booking.comment" class="text-caption grey--text ma-0 mt-1">{{ booking.comment }}</p>
+              <p v-if="booking.comment" class="text-caption text-medium-emphasis ma-0 mt-1">{{ booking.comment }}</p>
             </div>
             <v-chip
               :color="getStatusColor(booking)"
               variant="flat"
-              size="small"
+              :size="xs ? 'x-small' : 'small'"
               rounded="pill"
             >
               {{ getStatusText(booking) }}
@@ -308,18 +312,18 @@ const handleDelete = async () => {
 
           <div class="d-flex align-center justify-space-between">
             <div class="d-flex align-center">
-              <v-icon color="primary" size="small" class="mr-2">mdi-calendar</v-icon>
-              <span class="text-body-2">{{ formatDate(booking) }}</span>
+              <v-icon color="primary" size="small" :class="xs ? 'mr-1' : 'mr-2'">mdi-calendar</v-icon>
+              <span :class="xs ? 'text-caption' : 'text-body-2'">{{ formatDate(booking) }}</span>
             </div>
             <div v-if="canDelete(booking)" class="d-flex align-center">
               <v-btn
                 icon
-                size="small"
+                :size="xs ? 'x-small' : 'small'"
                 color="error"
                 variant="text"
                 @click.stop="showDeleteDialog(booking)"
               >
-                <v-icon size="small">mdi-delete</v-icon>
+                <v-icon :size="xs ? 'x-small' : 'small'">mdi-delete</v-icon>
               </v-btn>
             </div>
           </div>
@@ -327,26 +331,26 @@ const handleDelete = async () => {
 
         <template v-else>
           <v-row class="align-center">
-            <v-col cols="6">
+            <v-col cols="12" md="6" lg="5">
               <div class="d-flex align-center">
-                <v-avatar color="primary" class="mr-3" size="48">
-                  <v-icon color="white" size="24">{{ getBookingIcon(booking) }}</v-icon>
+                <v-avatar color="primary" :class="lgAndUp ? 'mr-4' : 'mr-3'" :size="lgAndUp ? 56 : 48">
+                  <v-icon color="white" :size="lgAndUp ? 28 : 24">{{ getBookingIcon(booking) }}</v-icon>
                 </v-avatar>
                 <div>
-                  <h3 class="text-h6 font-weight-medium d-flex align-center">
+                  <h3 :class="lgAndUp ? 'text-h5' : 'text-h6'" class="font-weight-medium d-flex align-center">
                     {{ getBookingTitle(booking) }} {{ booking.bookingType === 'wedding' ? 'Wedding' : booking.bookingType === 'funeral' ? 'Funeral' : booking.bookingType === 'baptism' ? 'Baptism' : 'Thanksgiving' }}
                     <v-icon v-if="isBookingCompleted(booking)" color="success" size="small" class="ml-2">
                       mdi-check-circle
                     </v-icon>
                   </h3>
-                  <p class="text-body-2 text-medium-emphasis ma-0">
+                  <p :class="lgAndUp ? 'text-body-1' : 'text-body-2'" class="text-medium-emphasis ma-0">
                     {{ getBookingSubtitle(booking) }}
                   </p>
-                  <div v-if="getReferenceId(booking)" class="mt-1">
+                  <div v-if="getReferenceId(booking)" :class="lgAndUp ? 'mt-2' : 'mt-1'">
                     <v-chip
                       color="success"
                       variant="tonal"
-                      size="small"
+                      :size="lgAndUp ? 'default' : 'small'"
                       prepend-icon="mdi-identifier"
                     >
                       {{ getReferenceId(booking) }}
@@ -356,16 +360,22 @@ const handleDelete = async () => {
               </div>
             </v-col>
 
-            <v-col cols="3">
+            <v-col cols="12" md="3" lg="3">
               <div class="d-flex align-center">
                 <v-icon color="primary" size="small" class="mr-2">mdi-calendar</v-icon>
-                <span class="text-body-1">{{ formatDate(booking) }}</span>
+                <span :class="lgAndUp ? 'text-body-1' : 'text-body-2'">{{ formatDate(booking) }}</span>
               </div>
             </v-col>
 
-            <v-col cols="3" class="text-right">
+            <v-col cols="12" md="3" lg="4" class="text-right">
               <div class="d-flex align-center justify-end mb-2">
-                <v-chip :color="getStatusColor(booking)" variant="flat" rounded="pill" class="mr-2">
+                <v-chip
+                  :color="getStatusColor(booking)"
+                  variant="flat"
+                  :size="lgAndUp ? 'default' : 'small'"
+                  rounded="pill"
+                  class="mr-2"
+                >
                   {{ getStatusText(booking) }}
                 </v-chip>
                 <v-btn
@@ -379,7 +389,7 @@ const handleDelete = async () => {
                   <v-icon size="small">mdi-delete</v-icon>
                 </v-btn>
               </div>
-              <div v-if="booking.comment" class="text-caption grey--text">{{ booking.comment }}</div>
+              <div v-if="booking.comment" class="text-caption text-medium-emphasis">{{ booking.comment }}</div>
             </v-col>
           </v-row>
         </template>
@@ -389,22 +399,22 @@ const handleDelete = async () => {
     <!-- Fallback card when no data -->
     <v-card
       v-else
-      :class="mobile ? 'pa-6' : 'pa-8'"
+      :class="xs ? 'pa-4' : smAndDown ? 'pa-6' : lgAndUp ? 'pa-10' : 'pa-8'"
       class="text-center mt-4"
       rounded="xl"
       elevation="0"
     >
-      <v-icon :size="mobile ? 80 : 96" color="primary" class="mb-3"> mdi-information-outline </v-icon>
-      <h3 :class="mobile ? 'text-h6 mb-2' : 'text-h5 mb-3'">No data available</h3>
-      <p :class="mobile ? 'text-body-2 mb-4' : 'text-body-1 mb-4'" class="text-medium-emphasis">
+      <v-icon :size="emptyStateIconSize" color="primary" class="mb-3"> mdi-information-outline </v-icon>
+      <h3 :class="xs ? 'text-body-1 mb-2' : smAndDown ? 'text-h6 mb-2' : lgAndUp ? 'text-h4 mb-4' : 'text-h5 mb-3'">No data available</h3>
+      <p :class="xs ? 'text-caption mb-3' : smAndDown ? 'text-body-2 mb-4' : lgAndUp ? 'text-h6 mb-5' : 'text-body-1 mb-4'" class="text-medium-emphasis">
         Please check back later for updates or contact support if you have any concerns.
       </p>
       <v-btn
         color="primary"
-        :size="mobile ? 'default' : 'large'"
+        :size="xs ? 'small' : smAndDown ? 'default' : 'large'"
         prepend-icon="mdi-refresh"
         rounded="pill"
-        class="px-6"
+        :class="xs ? 'px-4' : 'px-6'"
         @click="$router.go(0)"
       >
         Refresh
@@ -426,42 +436,8 @@ const handleDelete = async () => {
 </template>
 
 <style scoped>
-/* minimal styling; rely on Vuetify utilities */
+/* Minimal scoped CSS - rely on Vuetify utilities for all styling */
 .cursor-pointer {
   cursor: pointer;
-}
-
-.pagination-custom :deep(.v-pagination__item) {
-  margin: 0 2px;
-  min-height: 36px;
-  min-width: 36px;
-}
-
-.pagination-custom :deep(.v-pagination__item--is-active) {
-  background-color: rgb(var(--v-theme-primary));
-  color: white;
-}
-
-/* Mobile-specific pagination styles */
-@media (max-width: 600px) {
-  .pagination-custom :deep(.v-pagination__item) {
-    margin: 0 1px;
-    min-height: 40px;
-    min-width: 40px;
-    font-size: 14px;
-  }
-
-  .pagination-custom :deep(.v-pagination__prev),
-  .pagination-custom :deep(.v-pagination__next) {
-    min-height: 40px;
-    min-width: 40px;
-  }
-}
-
-/* Ensure proper spacing for mobile controls */
-@media (max-width: 960px) {
-  .mobile-pagination-container {
-    gap: 8px;
-  }
 }
 </style>

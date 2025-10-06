@@ -1,13 +1,18 @@
 import { ref } from 'vue'
 import { supabase } from '@/utils/supabase'
+import { useAnnouncementServices } from '@/views/announcements/announcementServices'
+import type { AnnouncementPayload } from '@/stores/announcementData'
 
 export const useAddEvents = () => {
   const loading = ref(false)
   const error = ref('')
   const success = ref('')
 
-  // Add new event to other_events table
-  const addEvent = async (eventData) => {
+  // Get announcement services composable
+  const { createAnnouncement } = useAnnouncementServices()
+
+  // Add new event to other_events table and also create announcement
+  const addEvent = async (eventData: any) => {
     loading.value = true
     error.value = ''
     success.value = ''
@@ -33,6 +38,7 @@ export const useAddEvents = () => {
         createdAtTimestamp = `${eventDate}T00:00:00.000Z`
       }
 
+      // First, add to other_events table (original implementation)
       const { data, error: insertError } = await supabase
         .from('other_events')
         .insert({
@@ -49,10 +55,29 @@ export const useAddEvents = () => {
         throw insertError
       }
 
+      // After successful insertion to other_events, also add to announcements
+      try {
+        const announcementPayload: AnnouncementPayload = {
+          title: eventData.title,
+          description: eventData.description,
+          date: eventDate,
+          starting_time: eventData.starting_time || null,
+          ending_time: eventData.ending_time || null
+        }
+
+        const announcementResult = await createAnnouncement(announcementPayload)
+
+        if (!announcementResult.success) {
+          console.warn('Event added to other_events but failed to create announcement:', announcementResult.error)
+        }
+      } catch (announcementError) {
+        console.warn('Event added to other_events but announcement creation failed:', announcementError)
+      }
+
       success.value = 'Event added successfully'
       return { data, success: true }
 
-    } catch (err) {
+    } catch (err: any) {
       error.value = err.message || 'Failed to add event'
       console.error('Error adding event:', err)
       return { error: err.message, success: false }
@@ -78,7 +103,7 @@ export const useAddEvents = () => {
 
       return { data, success: true }
 
-    } catch (err) {
+    } catch (err: any) {
       error.value = err.message || 'Failed to fetch events'
       console.error('Error fetching events:', err)
       return { error: err.message, success: false }
@@ -88,7 +113,7 @@ export const useAddEvents = () => {
   }
 
   // Update event
-  const updateEvent = async (eventId, eventData) => {
+  const updateEvent = async (eventId: number, eventData: any) => {
     loading.value = true
     error.value = ''
     success.value = ''
@@ -112,7 +137,7 @@ export const useAddEvents = () => {
       success.value = 'Event updated successfully'
       return { data, success: true }
 
-    } catch (err) {
+    } catch (err: any) {
       error.value = err.message || 'Failed to update event'
       console.error('Error updating event:', err)
       return { error: err.message, success: false }
@@ -122,7 +147,7 @@ export const useAddEvents = () => {
   }
 
   // Delete event
-  const deleteEvent = async (eventId) => {
+  const deleteEvent = async (eventId: number) => {
     loading.value = true
     error.value = ''
     success.value = ''
@@ -140,7 +165,7 @@ export const useAddEvents = () => {
       success.value = 'Event deleted successfully'
       return { success: true }
 
-    } catch (err) {
+    } catch (err: any) {
       error.value = err.message || 'Failed to delete event'
       console.error('Error deleting event:', err)
       return { error: err.message, success: false }

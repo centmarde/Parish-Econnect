@@ -2,7 +2,7 @@
 // Mao ni ang business logic para sa events CRUD operations
 
 import { ref, computed } from 'vue'
-import { useAnnouncementsStore } from '@/stores/announcementData.js'
+import { useAnnouncementsStore } from '@/stores/announcementDataOld.js'
 import {
   eventCategories,
   defaultEditForm,

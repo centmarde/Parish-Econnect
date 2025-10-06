@@ -4,7 +4,7 @@ import { useWeddingStore } from '@/stores/weddingBookingData.js'
 import { useBaptismStore } from '@/stores/baptismBookingData.js'
 import { useFuneralStore } from '@/stores/funeralBookingData.js'
 import { useThanksGivingStore } from '@/stores/thanksGivingBookingData.js'
-import { useAnnouncementsStore } from '@/stores/announcementData.js'
+import { useAnnouncementsStore } from '@/stores/announcementDataOld.js'
 import { supabase } from '@/utils/supabase.js'
 
 export interface DashboardStats {

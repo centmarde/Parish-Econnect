@@ -397,37 +397,22 @@ export const useActionQuery = () => {
       //console.log('BOOKING DENIED SUCCESSFULLY:', data)
       success.value = true
 
-      // Log the action to audit logs if comment was provided
-      if (denialComment && denialComment.trim() && currentUser) {
+      // Send notification to user about denial
+      if (denialComment && denialComment.trim() && currentUser && bookingData.user_id) {
         try {
-          await supabase.from('audit_logs').insert([
+          await supabase.from('notifications').insert([
             {
-              action: `Denied ${typeInfo.displayName} booking with comment: "${denialComment.trim()}"`,
-              user_id: currentUser.id,
-              table_name: typeInfo.tableName,
-              record_id: bookingData.id,
-              old_data: { is_approved: false, is_denied: false },
-              new_data: { is_approved: false, is_denied: true, comment: denialComment.trim() },
-              changed_at: new Date().toISOString(),
+              user_id: bookingData.user_id,
+              title: `${typeInfo.displayName} Booking Denied`,
+              message: `Your ${typeInfo.displayName.toLowerCase()} booking has been denied. Reason: ${denialComment.trim()}`,
+              color: 'error',
+              icon: 'mdi-close-circle',
+              is_read: false,
             },
           ])
-
-          // Send notification to user about denial
-          if (bookingData.user_id) {
-            await supabase.from('notifications').insert([
-              {
-                user_id: bookingData.user_id,
-                title: `${typeInfo.displayName} Booking Denied`,
-                message: `Your ${typeInfo.displayName.toLowerCase()} booking has been denied. Reason: ${denialComment.trim()}`,
-                color: 'error',
-                icon: 'mdi-close-circle',
-                is_read: false,
-              },
-            ])
-          }
-        } catch (auditError) {
-          console.warn('Failed to create audit log or notification:', auditError)
-          // Don't fail the main operation for audit logging issues
+        } catch (notificationError) {
+          console.warn('Failed to create notification:', notificationError)
+          // Don't fail the main operation for notification issues
         }
       }
 
@@ -478,6 +463,12 @@ export const useActionQuery = () => {
 
           // Extract numeric ID from calendar event ID (e.g., "other_1" -> 1)
           const numericId = extractNumericIdFromCalendarEvent(bookingData.id)
+
+          // Ensure numericId is a number
+          if (typeof numericId !== 'number') {
+            error.value = 'Invalid event ID format'
+            return { success: false, error: error.value }
+          }
 
           console.log('Deleting other event - Original ID:', bookingData.id, 'Numeric ID:', numericId)
 

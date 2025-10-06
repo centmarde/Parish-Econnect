@@ -31,9 +31,17 @@ import BaptismContinue from '@/views/contBaptism/ContBaptismView.vue'
 import BaptismContinue2 from '@/views/contBaptism/CameraBaptismView.vue'
 import FinnishView from '@/views/FinnishView.vue'
 
+import LandingView from '@/views/LandingView.vue'
+import AnnouncementView from '@/views/admin/AnnouncementView.vue'
+
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
+    {
+      path: '/',
+      name: 'landing',
+      component: LandingView,
+    },
     {
       path: '/trial-page',
       name: 'trial-page',
@@ -41,7 +49,7 @@ const router = createRouter({
     },
 
     {
-      path: '/',
+      path: '/auth',
       name: 'login',
       component: LoginView,
     },
@@ -62,6 +70,12 @@ const router = createRouter({
       name: 'pending',
       component: Pending,
       meta: { requiresUserMode: true },
+    },
+    {
+      path: '/admin/announcements',
+      name: 'announcement',
+      component: AnnouncementView,
+      meta: { requiresAdmin: true },
     },
     /*   {
       path: '/camera',
@@ -247,14 +261,24 @@ router.beforeEach(async (to) => {
 
   // If not logged in
   if (!isLoggedIn) {
-    // Only allow access to login and register
-    if (to.name === 'login' || to.name === 'register') {
+    // Only allow access to login, register, and landing
+    if (to.name === 'login' || to.name === 'register' || to.name === 'landing') {
       return true
     } else if (to.name === 'page-not-found' || to.name === 'forbidden') {
       return true
     } else {
       // any other page (even /homepage) = not allowed
       return { name: 'page-not-found' }
+    }
+  }
+
+  // If logged in and trying to access landing page, redirect to appropriate dashboard
+  if (isLoggedIn && to.name === 'landing') {
+    const isAdmin = authUserStore.isCurrentUserAdmin
+    if (isAdmin) {
+      return { name: 'admin-dashboard' }
+    } else {
+      return { name: 'homepage' }
     }
   }
 
