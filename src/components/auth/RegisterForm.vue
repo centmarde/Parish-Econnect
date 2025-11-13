@@ -206,67 +206,6 @@ const onFormSubmit = () => {
           </v-col>
         </v-row>
 
-        <!-- Account Role Selection -->
-        <div class="mb-1 mt-4">
-          <v-chip color="secondary" variant="tonal" class="mb-3">
-            <v-icon left size="small">mdi-shield-account</v-icon>
-            Account Type
-          </v-chip>
-        </div>
-
-        <v-row>
-          <v-col cols="12" md="6">
-            <v-select
-              v-model="registerData.role"
-              :items="[
-                { title: 'Regular User', value: 'user', subtitle: 'Standard parish member access' },
-                { title: 'Administrator', value: 'admin', subtitle: 'Full system access and management' }
-              ]"
-              item-title="title"
-              item-value="value"
-              label="Select Account Type"
-              variant="outlined"
-              color="primary"
-              density="comfortable"
-              prepend-inner-icon="mdi-account-cog"
-              :rules="[requiredValidator]"
-              class="form-field"
-              hide-details="auto"
-            >
-              <template v-slot:item="{ props, item }">
-                <v-list-item v-bind="props">
-
-                  <v-list-item-subtitle class="text-caption">{{ item.raw.subtitle }}</v-list-item-subtitle>
-                </v-list-item>
-              </template>
-            </v-select>
-          </v-col>
-          <v-col cols="12" md="6" class="d-flex align-center">
-            <v-alert
-              v-if="registerData.role === 'admin'"
-              type="warning"
-              variant="tonal"
-              density="compact"
-              class="text-caption"
-            >
-              <v-icon size="small" class="mr-1">mdi-information</v-icon>
-              Admin accounts have access to user management and system settings
-            </v-alert>
-            <v-alert
-              v-else
-              type="info"
-              variant="tonal"
-              density="compact"
-              class="text-caption"
-            >
-              <v-icon size="small" class="mr-1">mdi-check-circle</v-icon>
-              Standard user account for parish services
-            </v-alert>
-          </v-col>
-        </v-row>
-
-
-
         <!-- Enhanced Submit Button -->
         <v-hover v-slot:default="{ isHovering, props }" close-delay="200">
           <v-btn

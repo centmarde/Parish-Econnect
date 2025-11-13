@@ -159,13 +159,25 @@ export function useCameraWeddingUpload() {
       }
 
       // Update wedding booking with uploaded image URLs
+      // Map all document types to database columns
       const imageUrls = {
+        // Primary documents (always required)
         attached_images_1: uploadedUrls['marriage_interview']?.join(',') || null,
         attached_images_2: uploadedUrls['marriage_banns']?.join(',') || null,
         attached_images_3: uploadedUrls['jurisdiction_for_marriage']?.join(',') || null,
-        attached_images_4: uploadedUrls['marriage_certificate']?.join(',') || null,
-        attached_images_5: uploadedUrls['baptismal_certificate']?.join(',') || null,
-        attached_images_6: uploadedUrls['confirmation_certificate']?.join(',') || null
+
+        // Required additional documents
+        attached_images_4: uploadedUrls['baptismal_certificate']?.join(',') || null,
+        attached_images_5: uploadedUrls['confirmation_certificate']?.join(',') || null,
+        attached_images_6: uploadedUrls['birth_certificate_psa']?.join(',') || null,
+        attached_images_7: uploadedUrls['cenomar']?.join(',') || null,
+        attached_images_8: uploadedUrls['marriage_license']?.join(',') || null,
+        attached_images_9: uploadedUrls['pre_cana_seminar']?.join(',') || null,
+
+        // Optional documents
+        attached_images_10: uploadedUrls['certification_recommendation']?.join(',') || null,
+        attached_images_11: uploadedUrls['marriage_banns_publication']?.join(',') || null,
+        attached_images_12: uploadedUrls['jurisdiction_permit']?.join(',') || null
       }
 
       const { data, error } = await supabase

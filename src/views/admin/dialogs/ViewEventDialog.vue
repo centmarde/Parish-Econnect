@@ -357,6 +357,43 @@ const attachedImages = computed(() => {
     })
   }
 
+  if (booking.attached_images_7) {
+    images.push({
+      url: booking.attached_images_7,
+      label: 'Attachment 7'
+    })
+  }
+  if (booking.attached_images_8) {
+    images.push({
+      url: booking.attached_images_8,
+      label: 'Attachment 8'
+    })
+  }
+  if (booking.attached_images_9) {
+    images.push({
+      url: booking.attached_images_9,
+      label: 'Attachment 9'
+    })
+  }
+  if (booking.attached_images_10) {
+    images.push({
+      url: booking.attached_images_10,
+      label: 'Attachment 10'
+    })
+  }
+  if (booking.attached_images_11) {
+    images.push({
+      url: booking.attached_images_11,
+      label: 'Attachment 11'
+    })
+  }
+  if (booking.attached_images_12) {
+    images.push({
+      url: booking.attached_images_12,
+      label: 'Attachment 12'
+    })
+  }
+
   return images
 })
 

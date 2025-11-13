@@ -173,11 +173,11 @@
               </v-card-title>
               <v-card-text
                 class="text-white pa-0"
-                :style="$vuetify.display.mobile ? 'opacity: 0.9; font-size: 0.813rem; line-height: 1.5;' : 'opacity: 0.9; font-size: 0.875rem; line-height: 1.5;'"
+                :style="$vuetify.display.mobile ? 'opacity: 0.9; font-size: 0.813rem; line-height: 1.6;' : 'opacity: 0.9; font-size: 0.7rem; line-height: 1.5;'"
               >
                 Monday: 8:00 AM - 5:00 PM<br>
-                Tuesday: Closed<br>
-                Wednesday - Sunday: 8:00 AM - 5:00 PM
+                Tuesday: Closed <br>
+                Wednesday -Sunday: 8:00 AM - 5:00 PM
               </v-card-text>
             </v-col>
           </v-row>
