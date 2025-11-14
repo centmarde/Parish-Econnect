@@ -2,13 +2,12 @@
 import { ref, computed, onMounted, defineOptions, watch } from 'vue'
 import CalendarDialog from '../dialogs/CalendarDialog.vue'
 import ViewEventDialog from '../dialogs/ViewEventDialog.vue'
+import CalendarView from './CalendarView.vue'
+import CalendarTableView from './CalendarTableView.vue'
 import { useCalendarFetch } from '../composables/calendarFetch'
 import { useActionQuery } from '../composables/actionQuery'
 import { useConflictDetection } from '../composables/conflict'
-import { EVENT_LEGEND } from '../utils/constants'
-import { CalendarView } from 'vue-simple-calendar'
-import 'vue-simple-calendar/dist/vue-simple-calendar.css'
-import '../styles/calendar-theme.css'
+import { useCalendarTabManager } from '../composables/calendarTabManager'
 
 // Component name for ESLint multi-word rule
 defineOptions({
@@ -24,11 +23,13 @@ const { approveEvent, denyEvent, deleteEvent} = useActionQuery()
 // Conflict detection composable
 const { detectConflicts, hasConflicts, getConflictSeverity, conflictsCount } = useConflictDetection()
 
+// Tab manager composable
+const { activeTab, tabs } = useCalendarTabManager()
+
 // DEBUG: Call this function sa console to troubleshoot localStorage data
 // debugLocalStorage()
 
 // Calendar state
-const calendarRef = ref(null)
 const selectedDate = ref(new Date().toISOString().split('T')[0])
 const showDateDialog = ref(false)
 const showEventDialog = ref(false)
@@ -287,6 +288,31 @@ const handleDenyEventFromDialog = async (event, comment) => {
   await fetchAllEvents()
 }
 
+// Table view event handlers
+const handleTableViewEvent = (event) => {
+  handleEventClick(event)
+}
+
+const handleTableEditEvent = (event) => {
+  console.log('Edit event from table:', event)
+  // Implement edit event functionality
+}
+
+const handleTableApproveEvent = async (event) => {
+  await approveEvent(event)
+  await fetchAllEvents()
+}
+
+const handleTableDenyEvent = async (event, comment) => {
+  await denyEvent(event, comment)
+  await fetchAllEvents()
+}
+
+const handleTableDeleteEvent = async (event) => {
+  await deleteEvent(event)
+  await fetchAllEvents()
+}
+
 // Lifecycle
 onMounted(async () => {
   await fetchAllEvents()
@@ -308,182 +334,87 @@ watch(allEvents, () => {
 </script>
 
 <template>
-  <v-card class="calendar-container" elevation="2" rounded="lg">
-    <!-- Calendar Header -->
-    <v-card-title class="d-flex align-center justify-space-between pa-6 bg-primary text-white">
-      <div class="d-flex align-center">
-        <v-icon size="32" class="me-3">mdi-calendar-multiple</v-icon>
-        <div>
-          <h2 class="text-h5 font-weight-bold mb-1">Parish Event Calendar</h2>
-          <p class="text-body-2 mb-0 opacity-90">Manage and view all parish events</p>
-        </div>
-      </div>
-    </v-card-title>
-
-    <v-divider></v-divider>
-
-    <!-- Calendar Controls -->
-    <v-card-text class="pa-6 pb-0">
-      <div class="d-flex flex-column flex-sm-row align-center justify-space-between gap-4 mb-6">
-        <!-- Navigation Controls -->
-        <div class="d-flex align-center gap-2">
-          <v-btn
-            icon="mdi-chevron-left"
-            variant="outlined"
-            size="small"
-            @click="goToPreviousPeriod"
-          ></v-btn>
-
-          <v-btn
-            color="primary"
-            variant="elevated"
-            class="mx-2"
-            @click="goToToday"
-          >
-            Today
-          </v-btn>
-
-          <v-btn
-            icon="mdi-chevron-right"
-            variant="outlined"
-            size="small"
-            @click="goToNextPeriod"
-          ></v-btn>
-
-          <div class="ms-4">
-            <h3 class="text-h6 font-weight-medium">{{ displayPeriodLabel }}</h3>
+  <div class="calendar-manager">
+    <!-- Header Card -->
+    <v-card elevation="2" rounded="lg" class="mb-0">
+      <!-- Calendar Header with Tabs -->
+      <v-card-title class="d-flex align-center justify-space-between pa-6 bg-primary text-white">
+        <div class="d-flex align-center">
+          <v-icon size="32" class="me-3">mdi-calendar-multiple</v-icon>
+          <div>
+            <h2 class="text-h5 font-weight-bold mb-1">Parish Event Calendar</h2>
+            <p class="text-body-2 mb-0 opacity-90">Manage and view all parish events</p>
           </div>
         </div>
+      </v-card-title>
 
-        <!-- View Toggle -->
-        <div class="d-flex align-center gap-2">
-          <v-btn-toggle
-            v-model="currentView"
-            color="primary"
-            variant="outlined"
-            divided
-            mandatory
-          >
-            <v-btn
-              v-for="view in calendarViews"
-              :key="view.value"
-              :value="view.value"
-              size="small"
-              @click="changeView(view.value)"
-            >
-              <v-icon :icon="view.icon" class="me-1"></v-icon>
-              <span class="d-none d-sm-inline">{{ view.title }}</span>
-            </v-btn>
-          </v-btn-toggle>
-        </div>
-      </div>
-
-      <!-- Event Legend -->
-      <div class="mb-6">
-        <div class="d-flex flex-wrap align-center gap-3">
-          <span class="text-subtitle-2 font-weight-medium me-2">Event Types:</span>
-          <v-chip
-            v-for="legend in EVENT_LEGEND"
-            :key="legend.label"
-            :color="legend.color"
-            size="small"
-            variant="tonal"
-            class="me-2 mb-1"
-          >
-            <v-icon :icon="legend.icon" class="me-1" size="16"></v-icon>
-            {{ legend.label }}
-          </v-chip>
-        </div>
-      </div>
-
-      <!-- Conflict Indicator -->
-      <v-alert
-        v-if="conflictsCount > 0"
-        type="warning"
-        variant="tonal"
-        class="mb-6"
+      <!-- Tab Navigation -->
+      <v-tabs
+        v-model="activeTab"
+        class="bg-primary"
+        color="white"
+        slider-color="white"
         density="compact"
       >
-        <div class="d-flex align-center">
-          <v-icon icon="mdi-alert-circle" class="me-2"></v-icon>
-          <span class="text-subtitle-2">
-            {{ conflictsCount }} time conflict{{ conflictsCount > 1 ? 's' : '' }} detected
-          </span>
-        </div>
-        <div class="text-caption mt-1">
-          Events with red borders have scheduling conflicts. Click on conflicting events for details.
-        </div>
-      </v-alert>
-    </v-card-text>
-
-    <!-- Loading State -->
-    <div v-if="loading" class="d-flex justify-center align-center pa-8">
-      <v-progress-circular
-        indeterminate
-        color="primary"
-        size="48"
-      ></v-progress-circular>
-      <span class="ms-4 text-subtitle-1">Loading calendar events...</span>
-    </div>
-
-    <!-- Error State -->
-    <v-alert
-      v-else-if="error"
-      type="error"
-      variant="tonal"
-      class="ma-6"
-    >
-      {{ error }}
-      <template #append>
-        <v-btn
-          color="error"
-          variant="text"
-          @click="fetchAllEvents"
+        <v-tab
+          v-for="tab in tabs"
+          :key="tab.value"
+          :value="tab.value"
+          class="text-white"
         >
-          Retry
-        </v-btn>
-      </template>
-    </v-alert>
+          <v-icon :icon="tab.icon" class="me-2"></v-icon>
+          {{ tab.title }}
+        </v-tab>
+      </v-tabs>
+    </v-card>
 
-    <!-- Calendar View -->
-    <div v-else class="calendar-wrapper pa-6 pt-0">
+    <!-- Calendar View Card (Conditionally Rendered) -->
+    <v-card
+      v-if="activeTab === 'calendar'"
+      elevation="2"
+      rounded="lg"
+      class="mt-0 calendar-view-card"
+    >
       <CalendarView
-        ref="calendarRef"
-        :show-date="currentPeriodStart"
-        :items="calendarEvents"
+        :loading="loading"
+        :error="error"
+        :calendar-events="calendarEvents"
+        :current-period-start="currentPeriodStart"
         :display-period-uom="displayPeriodUom"
         :display-period-count="displayPeriodCount"
         :starting-day-of-week="startingDayOfWeek"
-        :enable-drag-drop="false"
-        :show-times="false"
-        :time-format-options="{ hour: 'numeric', minute: '2-digit' }"
-        class="theme-calendar calendar-large"
-        item-content-height="2.5rem"
+        :display-period-label="displayPeriodLabel"
+        :current-view="currentView"
+        :calendar-views="calendarViews"
+        :conflicts-count="conflictsCount"
         @click-date="handleDateClick"
         @click-item="handleEventClick"
+        @previous-period="goToPreviousPeriod"
+        @next-period="goToNextPeriod"
+        @today="goToToday"
+        @change-view="changeView"
+        @refresh="fetchAllEvents"
+      />
+    </v-card>
 
-      >
-
-      </CalendarView>
-    </div>
-
-    <!-- Empty State -->
-    <div
-      v-if="!loading && !error && calendarEvents.length === 0"
-      class="text-center pa-8"
+    <!-- Table View Card (Conditionally Rendered) -->
+    <v-card
+      v-if="activeTab === 'table'"
+      elevation="2"
+      rounded="lg"
+      class="mt-0 table-view-card"
     >
-      <v-icon color="grey-lighten-1" size="64" class="mb-4">
-        mdi-calendar-blank
-      </v-icon>
-      <h3 class="text-h6 text-grey-darken-1 mb-2">No Events Found</h3>
-      <p class="text-body-2 text-grey mb-4">
-        No events are currently scheduled. Events from approved bookings will appear here.
-      </p>
-      <v-btn color="primary" variant="elevated" @click="fetchAllEvents">
-        Refresh Calendar
-      </v-btn>
-    </div>
-  </v-card>
+      <CalendarTableView
+        :events="allEvents"
+        :loading="loading"
+        @view-event="handleTableViewEvent"
+        @edit-event="handleTableEditEvent"
+        @approve-event="handleTableApproveEvent"
+        @deny-event="handleTableDenyEvent"
+        @delete-event="handleTableDeleteEvent"
+      />
+    </v-card>
+  </div>
 
   <!-- Date Details Dialog -->
   <CalendarDialog
@@ -506,149 +437,33 @@ watch(allEvents, () => {
 </template>
 
 <style scoped>
-.calendar-wrapper {
-  min-height: 600px;
+.calendar-manager {
+  width: 100%;
   height: 100%;
 }
 
-.calendar-large {
-  min-height: 600px;
-  height: 100%;
+.calendar-view-card,
+.table-view-card {
+  min-height: calc(100vh - 200px);
+  border-top-left-radius: 0 !important;
+  border-top-right-radius: 0 !important;
 }
 
-:deep(.cv-wrapper) {
-  border-radius: 8px;
-  overflow: hidden;
-  height: 100%;
-  min-height: 600px;
-  display: flex;
-  flex-direction: column;
-  flex: 1;
+/* Tab styling */
+:deep(.v-tab) {
+  text-transform: none;
+  font-weight: 500;
 }
 
-:deep(.cv-weeks) {
-  flex: 1;
-  min-height: 0; /* Allow flexbox shrinking */
-}
-
-:deep(.cv-week) {
-  flex: 1;
-  display: flex;
-  flex-direction: row;
-}
-
-:deep(.cv-day) {
-  flex: 1;
-  min-height: 120px;
-  padding: 8px;
-}
-
-:deep(.cv-header-day) {
-  background-color: rgb(var(--v-theme-surface-variant));
-  color: rgb(var(--v-theme-on-surface-variant));
+:deep(.v-tab--selected) {
   font-weight: 600;
-  text-transform: uppercase;
-  font-size: 1rem;
-  padding: 1rem 0;
-  min-height: 50px;
-}
-
-:deep(.cv-day) {
-  border-color: rgba(var(--v-border-color), var(--v-border-opacity));
-}
-
-:deep(.cv-day.today) {
-  background-color: rgba(var(--v-theme-primary), 0.08);
-}
-
-:deep(.cv-day-number) {
-  font-weight: 600;
-  color: rgb(var(--v-theme-on-surface));
-  font-size: 1.1rem;
-  padding: 4px 8px;
-}
-
-:deep(.cv-day.outsideOfMonth .cv-day-number) {
-  color: rgb(var(--v-theme-on-surface-variant));
-  opacity: 0.6;
-}
-
-.calendar-event {
-  border-radius: 6px;
-  padding: 4px 8px;
-  margin: 1px 0;
-  font-size: 0.75rem;
-  line-height: 1.2;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
-}
-
-.calendar-event:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.16);
-}
-
-.event-title {
-  font-size: 0.75rem;
-  line-height: 1.2;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.event-time {
-  font-size: 0.625rem;
-  opacity: 0.9;
-  margin-top: 2px;
-}
-
-/* Conflict styling */
-:deep(.conflict-error) {
-  border: 2px solid #f44336 !important;
-  box-shadow: 0 0 8px rgba(244, 67, 54, 0.4) !important;
-  animation: pulse-error 2s infinite;
-}
-
-:deep(.conflict-warning) {
-  border: 2px solid #ff9800 !important;
-  box-shadow: 0 0 8px rgba(255, 152, 0, 0.4) !important;
-  animation: pulse-warning 2s infinite;
-}
-
-@keyframes pulse-error {
-  0% {
-    box-shadow: 0 0 8px rgba(244, 67, 54, 0.4);
-  }
-  50% {
-    box-shadow: 0 0 12px rgba(244, 67, 54, 0.6);
-  }
-  100% {
-    box-shadow: 0 0 8px rgba(244, 67, 54, 0.4);
-  }
-}
-
-@keyframes pulse-warning {
-  0% {
-    box-shadow: 0 0 8px rgba(255, 152, 0, 0.4);
-  }
-  50% {
-    box-shadow: 0 0 12px rgba(255, 152, 0, 0.6);
-  }
-  100% {
-    box-shadow: 0 0 8px rgba(255, 152, 0, 0.4);
-  }
 }
 
 /* Responsive adjustments */
 @media (max-width: 600px) {
-  .calendar-wrapper {
-    padding: 1rem;
-  }
-
-  :deep(.cv-header-day) {
-    font-size: 0.75rem;
-    padding: 0.5rem 0;
+  .calendar-view-card,
+  .table-view-card {
+    min-height: calc(100vh - 180px);
   }
 }
 </style>

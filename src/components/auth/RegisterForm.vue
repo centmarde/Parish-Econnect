@@ -147,6 +147,22 @@ const onFormSubmit = () => {
         </v-avatar>
         <h2 class="text-h4 text-primary mb-2 welcome-text">Create Account</h2>
         <p class="text-body-2 text-medium-emphasis">Join our spiritual community today</p>
+
+        <!-- Admin Access Information Card -->
+        <v-card
+          class="mt-3 mb-4 mx-auto admin-info-card"
+          max-width="400"
+          variant="outlined"
+          color="info"
+        >
+          <v-card-text class="text-center py-3">
+            <v-icon color="info" size="20" class="mb-1">mdi-information-outline</v-icon>
+            <p class="text-caption text-info ma-0">
+              <strong>Admin Access:</strong> New accounts are registered as regular users.
+              Contact admin support if you need elevated privileges (admin/moderator access).
+            </p>
+          </v-card-text>
+        </v-card>
       </div>
 
       <div class="auth-form-content register-content">
@@ -247,6 +263,31 @@ const onFormSubmit = () => {
             </v-btn>
           </v-col>
         </v-row>
+
+        <!-- Admin Role Information with Tooltip -->
+        <v-row class="mt-1" no-gutters>
+          <v-col cols="12" class="text-center">
+            <v-tooltip location="top" max-width="300">
+              <template v-slot:activator="{ props }">
+                <v-btn
+                  v-bind="props"
+                  variant="text"
+                  size="small"
+                  color="info"
+                  prepend-icon="mdi-information"
+                  class="text-caption"
+                >
+                  Admin Access Information
+                </v-btn>
+              </template>
+              <span>
+                New accounts are registered as regular users by default.
+                If you need admin or moderator privileges, please contact
+                the admin support team after registration for role upgrade.
+              </span>
+            </v-tooltip>
+          </v-col>
+        </v-row>
       </div>
     </v-form>
 
@@ -335,5 +376,18 @@ const onFormSubmit = () => {
 
 .toggle-link:hover {
   text-decoration: none;
+}
+
+.admin-info-card {
+  border: 1.5px solid rgba(33, 150, 243, 0.3) !important;
+  background: rgba(33, 150, 243, 0.05) !important;
+  transition: all 0.3s ease;
+}
+
+.admin-info-card:hover {
+  border-color: rgba(33, 150, 243, 0.5) !important;
+  background: rgba(33, 150, 243, 0.08) !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(33, 150, 243, 0.15) !important;
 }
 </style>

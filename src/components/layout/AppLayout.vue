@@ -1,5 +1,11 @@
 <script setup>
 import { ref, computed } from 'vue'
+import { useRoute } from 'vue-router'
+import { useAuthUserStore } from '@/stores/authUser'
+
+const route = useRoute()
+const authStore = useAuthUserStore()
+
 const theme = ref(localStorage.getItem('theme') ?? 'light')
 
 const isDark = computed({
@@ -8,6 +14,11 @@ const isDark = computed({
     theme.value = val ? 'dark' : 'light'
     localStorage.setItem('theme', theme.value)
   },
+})
+
+// Computed property to determine if login button should be shown
+const showLoginButton = computed(() => {
+  return !authStore.user && route.path !== '/auth'
 })
 
 function onClick() {
@@ -36,6 +47,16 @@ const { smAndDown } = useDisplay()
           </h2>
         </div>
         <v-spacer></v-spacer>
+        <!--Login Button - only show when user is not authenticated and not on auth page-->
+        <v-btn
+          v-if="showLoginButton"
+          variant="text"
+          class="me-5"
+          @click="$router.push('/auth')"
+          :size="smAndDown ? 'small' : 'default'"
+        >
+          Login
+        </v-btn>
         <!--Toggle Switch-->
         <v-switch
           v-model="isDark"
