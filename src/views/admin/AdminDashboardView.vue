@@ -4,6 +4,7 @@ import { supabase } from '@/utils/supabase.js'
 import AdminHeader from '@/components/layout/AdminHeader.vue'
 import PreloaderView from '@/components/layout/PreloaderView.vue'
 import EventCalendar from './components/Calendar.vue'
+import BookingTrendsChart from './components/BookingTrendsChart.vue'
 import { useAdminDashboard } from './composables/adminDashboardCount.js'
 
 // Use admin dashboard composable
@@ -145,6 +146,13 @@ onUnmounted(() => {
                 ></div>
               </v-card-text>
             </v-card>
+          </v-col>
+        </v-row>
+
+        <!-- Booking Trends Section -->
+        <v-row class="mb-4">
+          <v-col cols="12">
+            <BookingTrendsChart />
           </v-col>
         </v-row>
 
