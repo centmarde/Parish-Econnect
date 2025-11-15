@@ -3,6 +3,7 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { EVENT_CATEGORIES } from '../utils/constants'
 import { useAddEvents } from '../composables/addEvents'
 import { useAuthUserStore } from '@/stores/authUser'
+import { useOtherStore } from '@/stores/otherData'
 import {
   formatDate,
   formatTime,
@@ -37,6 +38,9 @@ const emit = defineEmits(['update:modelValue', 'approve-event', 'deny-event', 'd
 
 // Add Events composable for handling other_events deletion
 const { deleteEvent: deleteOtherEvent } = useAddEvents()
+
+// Other Store for handling others table deletion
+const otherStore = useOtherStore()
 
 // Auth store for getting user emails
 const authStore = useAuthUserStore()
@@ -471,7 +475,7 @@ const handleDelete = async () => {
                      eventData.value?.bookingId ||
                      eventData.value?.id
 
-      console.log('Attempting to delete other event with ID:', eventId, 'Event data:', eventData.value)
+      console.log('Attempting to delete others booking with ID:', eventId, 'Event data:', eventData.value)
 
       if (eventId) {
         // Extract numeric ID from calendar event ID (e.g., "other_1" -> 1)
@@ -479,19 +483,18 @@ const handleDelete = async () => {
 
         console.log('Extracted numeric ID for deletion:', numericId, 'from original ID:', eventId)
 
-        // Use the addEvents composable to delete from other_events table
-        const result = await deleteOtherEvent(numericId)
-
-        if (result.success) {
-          console.log('Successfully deleted other event from database')
+        // Use the otherStore to delete from others table
+        try {
+          await otherStore.remove(numericId)
+          console.log('Successfully deleted others booking from database')
           dialog.value = false
           emit('delete-event', eventData.value) // Emit to refresh calendar
           return
-        } else {
-          console.error('Failed to delete other event from database:', result.error)
+        } catch (error) {
+          console.error('Failed to delete others booking from database:', error)
         }
       } else {
-        console.error('Could not find event ID for other event deletion')
+        console.error('Could not find event ID for others booking deletion')
       }
     }
 
