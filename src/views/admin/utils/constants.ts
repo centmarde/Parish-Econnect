@@ -11,7 +11,8 @@ export const EVENT_CATEGORIES = {
   BAPTISM: { name: 'Baptism', color: '#2196F3', icon: 'mdi-baby-face' },
   FUNERAL: { name: 'Funeral', color: '#FF9800', icon: 'mdi-cross' },
   THANKSGIVING: { name: 'Thanksgiving', color: '#9C27B0', icon: 'mdi-hands-pray' },
-  OTHERS: { name: 'Others', color: '#607D8B', icon: 'mdi-calendar-star' }
+  CHURCHEVENTS: { name: 'Church Events', color: '#607D8B', icon: 'mdi-calendar-star' },
+  OTHERS: { name: 'Others', color: '#795548', icon: 'mdi-calendar-blank' }
 }
 
 // Sample events for calendar display
@@ -38,6 +39,11 @@ export const EVENT_LEGEND = [
     color: EVENT_CATEGORIES.THANKSGIVING.color,
     label: EVENT_CATEGORIES.THANKSGIVING.name,
     icon: EVENT_CATEGORIES.THANKSGIVING.icon
+  },
+  {
+    color: EVENT_CATEGORIES.CHURCHEVENTS.color,
+    label: EVENT_CATEGORIES.CHURCHEVENTS.name,
+    icon: EVENT_CATEGORIES.CHURCHEVENTS.icon
   },
   {
     color: EVENT_CATEGORIES.OTHERS.color,

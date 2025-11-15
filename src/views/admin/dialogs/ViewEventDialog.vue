@@ -195,11 +195,12 @@ const eventDetails = computed(() => {
     {
       label: 'Booking Owner',
       value: (() => {
-        // Check if this is an "others" category event
-        if (category.toLowerCase() === 'others' || category.toLowerCase() === 'other') {
+        // Check if this is a "churchevents" category event (admin-created events)
+        if (category.toLowerCase() === 'churchevents' || category.toLowerCase() === 'churchevent') {
           return 'San Isidro Labrador Parish'
         }
 
+        // For "others" and all other user bookings, show the actual booking owner
         const booking = storageData?.booking || fallbackEventData?.booking
 
         // Prioritize the fetched email from admin function
@@ -215,7 +216,7 @@ const eventDetails = computed(() => {
         }
         return 'N/A'
       })(),
-      source: (category.toLowerCase() === 'others' || category.toLowerCase() === 'other')
+      source: (category.toLowerCase() === 'churchevents' || category.toLowerCase() === 'churchevent')
         ? 'parish-default'
         : (bookingOwnerEmail.value ? 'admin-lookup' : (storageData?.booking ? 'localStorage' : 'fallback'))
     },
@@ -259,8 +260,9 @@ const eventDetails = computed(() => {
       ),
       source: storageData?.eventEndTime ? 'localStorage' : 'fallback'
     },
-    // Only show description for "others" category events
-    ...(category.toLowerCase() === 'others' || category.toLowerCase() === 'other' ? [{
+    // Show description for "churchevents" and "others" category events
+    ...(category.toLowerCase() === 'churchevents' || category.toLowerCase() === 'churchevent' ||
+        category.toLowerCase() === 'others' || category.toLowerCase() === 'other' ? [{
       label: 'Description',
       value: getFieldValue('description',
         fallbackEventData?.description ||
@@ -428,10 +430,41 @@ const openImageDialog = (imageUrl) => {
 
 const handleDelete = async () => {
   try {
-    // Check if this is an "others" category event that should use other_events table
+    // Check if this is a "churchevents" category event that should use other_events table
     const eventCategory = eventData.value?.category?.toLowerCase()
 
-    if (eventCategory === 'others' || eventCategory === 'other') {
+    if (eventCategory === 'churchevents' || eventCategory === 'churchevent') {
+      // Get the event ID from multiple possible locations
+      const eventId = eventData.value?.originalEvent?.id ||
+                     eventData.value?.bookingData?.id ||
+                     eventData.value?.bookingId ||
+                     eventData.value?.id
+
+      console.log('Attempting to delete church event with ID:', eventId, 'Event data:', eventData.value)
+
+      if (eventId) {
+        // Extract numeric ID from calendar event ID (e.g., "churchevent_1" -> 1)
+        const numericId = extractNumericIdFromCalendarEvent(eventId)
+
+        console.log('Extracted numeric ID for deletion:', numericId, 'from original ID:', eventId)
+
+        // Use the addEvents composable to delete from other_events table
+        const result = await deleteOtherEvent(numericId)
+
+        if (result.success) {
+          console.log('Successfully deleted church event from database')
+          dialog.value = false
+          emit('delete-event', eventData.value) // Emit to refresh calendar
+          return
+        } else {
+          console.error('Failed to delete church event from database:', result.error)
+        }
+      } else {
+        console.error('Could not find event ID for church event deletion')
+      }
+    }
+    // Check if this is an "others" category event that should use others table
+    else if (eventCategory === 'others' || eventCategory === 'other') {
       // Get the event ID from multiple possible locations
       const eventId = eventData.value?.originalEvent?.id ||
                      eventData.value?.bookingData?.id ||

@@ -5,25 +5,29 @@ export const BOOKING_CONSTANTS = {
     WEDDING: 'wedding',
     FUNERAL: 'funeral',
     BAPTISM: 'baptism',
-    THANKSGIVING: 'thanksgiving'
+    THANKSGIVING: 'thanksgiving',
+    OTHERS: 'others'
   },
   BOOKING_ICONS: {
     wedding: 'mdi-heart',
     funeral: 'mdi-cross',
     baptism: 'mdi-water',
-    thanksgiving: 'mdi-church'
+    thanksgiving: 'mdi-church',
+    others: 'mdi-calendar-blank'
   },
   BOOKING_TYPE_LABELS: {
     wedding: 'Wedding Booking',
     funeral: 'Funeral Booking',
     baptism: 'Baptism Booking',
-    thanksgiving: 'Thanksgiving Booking'
+    thanksgiving: 'Thanksgiving Booking',
+    others: 'Other Event Booking'
   },
   BOOKING_SUBTITLES: {
     wedding: (booking) => `${booking.bride_firstname} ${booking.bride_lastname} - ${booking.groom_firstname} ${booking.groom_lastname}`,
     funeral: 'Funeral Mass Booking',
     baptism: 'Baptism Mass Booking',
-    thanksgiving: 'Thanksgiving Mass Booking'
+    thanksgiving: 'Thanksgiving Mass Booking',
+    others: 'Other Event Booking'
   }
 }
 
@@ -39,6 +43,7 @@ export const formatBookingDate = (booking, handlers) => {
   const dateField = booking.bookingType === 'wedding' ? booking.wedding_date
     : booking.bookingType === 'funeral' ? booking.funeral_date
     : booking.bookingType === 'baptism' ? booking.baptism_date
+    : booking.bookingType === 'others' ? booking.date
     : booking.thanksgiving_date
 
   return handler.formatDate(dateField || '')
@@ -91,6 +96,8 @@ export const getBookingTitle = (booking) => {
       return `${booking.child_firstname} ${booking.child_lastname}`
     case BOOKING_CONSTANTS.BOOKING_TYPES.THANKSGIVING:
       return booking.title || `${booking.participant_firstname} ${booking.participant_lastname}`
+    case BOOKING_CONSTANTS.BOOKING_TYPES.OTHERS:
+      return booking.title || 'Other Event'
     default:
       return 'Unknown Booking'
   }
@@ -109,6 +116,8 @@ export const getBookingSubtitle = (booking) => {
       return BOOKING_CONSTANTS.BOOKING_SUBTITLES.baptism
     case BOOKING_CONSTANTS.BOOKING_TYPES.THANKSGIVING:
       return BOOKING_CONSTANTS.BOOKING_SUBTITLES.thanksgiving
+    case BOOKING_CONSTANTS.BOOKING_TYPES.OTHERS:
+      return BOOKING_CONSTANTS.BOOKING_SUBTITLES.others
     default:
       return 'Unknown Booking Type'
   }
@@ -156,6 +165,7 @@ export const isBookingCompleted = (booking) => {
       return booking.status === 'completed' || booking.status === 'approved' || booking.attached_images_1
     case BOOKING_CONSTANTS.BOOKING_TYPES.WEDDING:
     case BOOKING_CONSTANTS.BOOKING_TYPES.THANKSGIVING:
+    case BOOKING_CONSTANTS.BOOKING_TYPES.OTHERS:
       return booking.status === 'completed' || booking.status === 'approved'
     default:
       return false
@@ -182,6 +192,7 @@ export const mergeAndSortBookings = (bookingsByType) => {
         const dateField = type === 'wedding' ? booking.wedding_date
           : type === 'funeral' ? booking.funeral_date
           : type === 'baptism' ? booking.baptism_date
+          : type === 'others' ? booking.date
           : booking.thanksgiving_date
 
         combined.push({

@@ -6,6 +6,7 @@ import { useWeddingHeader } from './weddingHeaderLayout/weddingHeader'
 import { useFuneralHeader } from './funeralHeaderLayout/funeralHeader'
 import { useThanksGivingHeader } from './thanksGivingLayout/thanksGiving'
 import { useBaptismHeader } from './baptism/baptismHeader'
+import { useOthersHeader } from './others/othersHeader'
 import FormDialog from './dialogs/FormDialog.vue'
 import {
   BOOKING_CONSTANTS,
@@ -85,6 +86,16 @@ const {
   deleteBooking: deleteBaptismBooking
 } = useBaptismHeader()
 
+const {
+  userBookings: othersBookings,
+  formatDate: formatOthersDate,
+  getStatusColor: getOthersStatusColor,
+  getStatusText: getOthersStatusText,
+  handleBookingClick: handleOthersClick,
+  isClickable: isOthersClickable,
+  deleteBooking: deleteOthersBooking
+} = useOthersHeader()
+
 // Create handlers object for the helper functions
 const bookingHandlers = {
   wedding: {
@@ -118,6 +129,14 @@ const bookingHandlers = {
     handleBookingClick: handleBaptismClick,
     isClickable: isBaptismClickable,
     deleteBooking: deleteBaptismBooking
+  },
+  others: {
+    formatDate: formatOthersDate,
+    getStatusColor: getOthersStatusColor,
+    getStatusText: getOthersStatusText,
+    handleBookingClick: handleOthersClick,
+    isClickable: isOthersClickable,
+    deleteBooking: deleteOthersBooking
   }
 }
 
@@ -127,7 +146,8 @@ const allBookings = computed(() => {
     wedding: weddingBookings.value,
     funeral: funeralBookings.value,
     thanksgiving: thanksGivingBookings.value,
-    baptism: baptismBookings.value
+    baptism: baptismBookings.value,
+    others: othersBookings.value
   }
 
   return mergeAndSortBookings(bookingsByType)

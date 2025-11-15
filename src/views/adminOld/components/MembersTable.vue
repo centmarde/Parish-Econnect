@@ -16,7 +16,7 @@ const {
   viewMemberDetails,
   editMember,
   updateMemberRole,
-  confirmDelete,
+  // confirmDelete,
   getRoleColor
 } = membersManagement
 </script>
@@ -155,12 +155,12 @@ const {
                       </v-list-item-title>
                     </v-list-item>
                     <v-divider />
-                    <v-list-item @click="confirmDelete(item)" class="text-red">
+                  <!--   <v-list-item @click="confirmDelete(item)" class="text-red">
                       <template #prepend>
                         <v-icon color="red">mdi-delete</v-icon>
                       </template>
                       <v-list-item-title>Delete Member</v-list-item-title>
-                    </v-list-item>
+                    </v-list-item> -->
                   </v-list>
                 </v-menu>
               </div>

@@ -134,6 +134,11 @@ const getCategoryInfo = (category) => {
 const getBookingOwner = (event) => {
   const category = event.category?.toLowerCase()
 
+  // Check if this is a "churchevents" category event
+  if (category === 'churchevents' || category === 'churchevent') {
+    return 'San Isidro Labrador Parish'
+  }
+
   // Check if this is an "others" category event
   if (category === 'others' || category === 'other') {
     return 'San Isidro Labrador Parish'

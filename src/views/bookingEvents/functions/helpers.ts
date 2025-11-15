@@ -45,6 +45,12 @@ export const getEventItems = (): EventItem[] => [
     color: 'blue-lighten-4',
     icon: 'mdi-water',
   },
+  {
+    name: '📋 Others',
+    description: 'Other special events',
+    color: 'green-lighten-4',
+    icon: 'mdi-calendar-blank',
+  },
 ]
 
 // Booking Steps Data
@@ -101,6 +107,10 @@ export const isThanksgivingEvent = (item: EventItem): boolean => {
 
 export const isBaptismEvent = (item: EventItem): boolean => {
   return item.name && item.name.startsWith('✝️')
+}
+
+export const isOthersEvent = (item: EventItem): boolean => {
+  return item.name && item.name.startsWith('📋')
 }
 
 export const cleanEventName = (name: string): string => {

@@ -170,8 +170,13 @@
   color: white;
 }
 
-.theme-calendar .cv-item.event-others {
+.theme-calendar .cv-item.event-churchevents {
   background-color: #607D8B;
+  color: white;
+}
+
+.theme-calendar .cv-item.event-others {
+  background-color: #795548;
   color: white;
 }
 

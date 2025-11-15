@@ -291,11 +291,6 @@ export const useActionQuery = () => {
       const typeInfo = extractBookingType(eventData, bookingData)
       //console.log('BOOKING TYPE CLASSIFICATION:', typeInfo)
 
-      if (typeInfo.type === 'others') {
-        error.value = 'Cannot approve: Other events are automatically approved when created'
-        return { success: false, error: error.value }
-      }
-
       // Execute Supabase update query
       const { data, error: updateError } = await supabase
         .from(typeInfo.tableName)
@@ -358,11 +353,6 @@ export const useActionQuery = () => {
       // Extract booking type/category information
       const typeInfo = extractBookingType(eventData, bookingData)
      // console.log(' BOOKING TYPE CLASSIFICATION FOR DENIAL:', typeInfo)
-
-      if (typeInfo.type === 'others') {
-        error.value = 'Cannot deny: Other events cannot be denied, only deleted'
-        return { success: false, error: error.value }
-      }
 
       // Get current user for audit trail
       const { data: userData } = await supabase.auth.getUser()

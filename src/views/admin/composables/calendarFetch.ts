@@ -3,6 +3,7 @@ import { useBaptismStore } from '@/stores/baptismBookingData.js'
 import { useWeddingStore } from '@/stores/weddingBookingData.js'
 import { useFuneralStore } from '@/stores/funeralBookingData.js'
 import { useThanksGivingStore } from '@/stores/thanksGivingBookingData.js'
+import { useOtherStore } from '@/stores/otherData'
 import { EVENT_CATEGORIES } from '../utils/constants'
 import { supabase } from '@/utils/supabase'
 
@@ -15,9 +16,10 @@ export const useCalendarFetch = () => {
   const weddingStore = useWeddingStore()
   const funeralStore = useFuneralStore()
   const thanksgivingStore = useThanksGivingStore()
+  const otherStore = useOtherStore()
 
-  // Other events state
-  const otherEvents = ref([])
+  // Church events state (from other_events table)
+  const churchEvents = ref([])
 
   // Transform booking data to calendar events (VCalendar compatible)
   const transformBookingToEvent = (booking: any, category: string) => {
@@ -51,6 +53,12 @@ export const useCalendarFetch = () => {
       case 'thanksgiving':
         eventName = `Thanksgiving Mass - ${booking.title} ${booking.organizer}`
         eventDate = booking.thanksgiving_date
+        eventTime = booking.starting_time
+        eventEndTime = booking.ending_time
+        break
+      case 'others':
+        eventName = booking.title || 'Other Event'
+        eventDate = booking.date || booking.created_at?.split('T')[0]
         eventTime = booking.starting_time
         eventEndTime = booking.ending_time
         break
@@ -167,12 +175,12 @@ export const useCalendarFetch = () => {
     }
   }
 
-  // Transform other_events data to calendar events
-  const transformOtherEventToEvent = (otherEvent: any) => {
+  // Transform others bookings (from others table) to calendar events
+  const transformOthersEventToEvent = (otherEvent: any) => {
     const categoryConfig = EVENT_CATEGORIES.OTHERS
 
-    // Use created_at date as the event date
-    const eventDate = otherEvent.created_at.split('T')[0]
+    // Use date field as the event date, fallback to created_at
+    const eventDate = otherEvent.date || otherEvent.created_at?.split('T')[0]
     const eventName = otherEvent.title || 'Other Event'
 
     // Get time information
@@ -203,6 +211,16 @@ export const useCalendarFetch = () => {
       }
     }
 
+    // Determine status based on booking fields
+    let status = 'pending'
+    if (otherEvent.ref_number) {
+      status = 'complete'
+    } else if (otherEvent.is_approved) {
+      status = 'approved'
+    } else if (otherEvent.is_denied) {
+      status = 'denied'
+    }
+
     // vue-simple-calendar compatible event structure
     return {
       // Required fields for vue-simple-calendar
@@ -214,10 +232,11 @@ export const useCalendarFetch = () => {
 
       // Custom fields for our app
       category: 'others',
+      booking: otherEvent, // Keep reference to original booking data
       color: categoryConfig?.color,
       time: isAllDay ? null : eventTime,
       allDay: isAllDay,
-      status: 'approved', // Other events are automatically approved
+      status: status,
 
       // Pass detailed event data for dialog access
       eventName: eventName,
@@ -228,9 +247,10 @@ export const useCalendarFetch = () => {
       bookingData: {
         id: otherEvent.id,
         category: 'others',
-        is_approved: true,
-        is_denied: false,
-        status: 'approved'
+        is_approved: otherEvent.is_approved,
+        is_denied: otherEvent.is_denied,
+        status: status,
+        user_id: otherEvent.user_id // Include user_id for booking owner lookup
       },
 
       // Additional metadata
@@ -240,8 +260,84 @@ export const useCalendarFetch = () => {
     }
   }
 
-  // Fetch other events from database
-  const fetchOtherEvents = async () => {
+  // Transform church events (from other_events table) to calendar events
+  const transformChurchEventToEvent = (churchEvent: any) => {
+    const categoryConfig = EVENT_CATEGORIES.CHURCHEVENTS
+
+    // Use created_at date as the event date
+    const eventDate = churchEvent.created_at.split('T')[0]
+    const eventName = churchEvent.title || 'Church Event'
+
+    // Get time information
+    const eventTime = churchEvent.starting_time
+    const eventEndTime = churchEvent.ending_time
+
+    // Format date for calendar
+    let startDate = new Date(eventDate)
+    let endDate = new Date(eventDate)
+    let isAllDay = !eventTime && !eventEndTime
+
+    if (isAllDay) {
+      // All-day event
+      endDate.setDate(endDate.getDate() + 1)
+    } else {
+      // Timed event - use time data as-is
+      if (eventTime) {
+        const [startHours, startMinutes] = eventTime.split(':')
+        startDate.setHours(parseInt(startHours), parseInt(startMinutes), 0, 0)
+      }
+
+      if (eventEndTime) {
+        const [endHours, endMinutes] = eventEndTime.split(':')
+        endDate.setHours(parseInt(endHours), parseInt(endMinutes), 0, 0)
+      } else if (eventTime) {
+        // Default to 1 hour after start time if only start time provided
+        endDate.setHours(startDate.getHours() + 1, startDate.getMinutes(), 0, 0)
+      }
+    }
+
+    // Church events are always approved (admin-created)
+    const status = 'approved'
+
+    // vue-simple-calendar compatible event structure
+    return {
+      // Required fields for vue-simple-calendar
+      id: `churchevent_${churchEvent.id}`,
+      title: eventName,
+      startDate: startDate,
+      endDate: endDate,
+      classes: ['event-churchevents'], // CSS classes for styling
+
+      // Custom fields for our app
+      category: 'churchevents',
+      color: categoryConfig?.color,
+      time: isAllDay ? null : eventTime,
+      allDay: isAllDay,
+      status: status,
+
+      // Pass detailed event data for dialog access
+      eventName: eventName,
+      eventDate: eventDate,
+      eventTime: eventTime,
+      eventEndTime: eventEndTime,
+      description: churchEvent.description,
+      bookingData: {
+        id: churchEvent.id,
+        category: 'churchevents',
+        is_approved: true,
+        is_denied: false,
+        status: status
+      },
+
+      // Additional metadata
+      details: churchEvent.description || eventName,
+      bookingId: churchEvent.id,
+      originalEvent: churchEvent
+    }
+  }
+
+  // Fetch church events from other_events table
+  const fetchChurchEvents = async () => {
     try {
       const { data, error: fetchError } = await supabase
         .from('other_events')
@@ -252,10 +348,10 @@ export const useCalendarFetch = () => {
         throw fetchError
       }
 
-      otherEvents.value = data || []
+      churchEvents.value = data || []
     } catch (err) {
-      console.error('Error fetching other events:', err)
-      otherEvents.value = []
+      console.error('Error fetching church events:', err)
+      churchEvents.value = []
     }
   }
 
@@ -295,9 +391,15 @@ export const useCalendarFetch = () => {
       if (event) events.push(event)
     })
 
-    // Transform other events
-    otherEvents.value.forEach(otherEvent => {
-      const event = transformOtherEventToEvent(otherEvent)
+    // Transform church events (from other_events table)
+    churchEvents.value.forEach(churchEvent => {
+      const event = transformChurchEventToEvent(churchEvent)
+      if (event) events.push(event)
+    })
+
+    // Transform others events (from others table - user bookings)
+    otherStore.items.forEach(otherEvent => {
+      const event = transformOthersEventToEvent(otherEvent)
       if (event) events.push(event)
     })
 
@@ -311,13 +413,14 @@ export const useCalendarFetch = () => {
     error.value = ''
 
     try {
-      // Fetch from all booking stores and other events in parallel
+      // Fetch from all booking stores, church events, and others in parallel
       await Promise.all([
         baptismStore.fetchBookings(),
         weddingStore.fetchBookings(),
         funeralStore.fetchBookings(),
         thanksgivingStore.fetchBookings(),
-        fetchOtherEvents()
+        fetchChurchEvents(),
+        otherStore.fetchAll()
       ])
 
       // console.log('Naka-fetch na ang tanan events para sa calendar')
