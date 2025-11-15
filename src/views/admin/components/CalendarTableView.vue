@@ -11,6 +11,10 @@ const props = defineProps({
   loading: {
     type: Boolean,
     default: false
+  },
+  viewOnly: {
+    type: Boolean,
+    default: false
   }
 })
 
@@ -182,18 +186,22 @@ const handleDeleteEvent = (event) => {
 }
 
 const canApprove = (event) => {
+  if (props.viewOnly) return false
   return event.status === 'pending'
 }
 
 const canDeny = (event) => {
+  if (props.viewOnly) return false
   return event.status === 'pending'
 }
 
 const canEdit = (event) => {
+  if (props.viewOnly) return false
   return ['pending', 'approved'].includes(event.status)
 }
 
 const canDelete = () => {
+  if (props.viewOnly) return false
   return true // Admin can delete any event
 }
 </script>
