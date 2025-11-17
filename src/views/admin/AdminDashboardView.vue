@@ -6,6 +6,10 @@ import PreloaderView from '@/components/layout/PreloaderView.vue'
 import EventCalendar from './components/Calendar.vue'
 import BookingTrendsChart from './components/BookingTrendsChart.vue'
 import { useAdminDashboard } from './composables/adminDashboardCount.js'
+import TotalBookingsDialog from './dialogs/TotalBookingsDialog.vue'
+import PendingApprovalsDialog from './dialogs/PendingApprovalsDialog.vue'
+import UpcomingEventsDialog from './dialogs/UpcomingEventsDialog.vue'
+import ParishMembersDialog from './dialogs/ParishMembersDialog.vue'
 
 // Use admin dashboard composable
 const {
@@ -17,6 +21,12 @@ const {
 } = useAdminDashboard()
 
 const errorMessage = ref(null)
+
+// Dialog states
+const showTotalBookingsDialog = ref(false)
+const showPendingApprovalsDialog = ref(false)
+const showUpcomingEventsDialog = ref(false)
+const showParishMembersDialog = ref(false)
 
 let subscriptions = []
 
@@ -67,6 +77,7 @@ onUnmounted(() => {
                 icon: 'mdi-book-multiple',
                 trend: statsTrends.totalBookings,
                 gradient: { start: '#667eea', end: '#764ba2' },
+                onClick: () => showTotalBookingsDialog = true
               },
               {
                 value: stats.pendingApprovals,
@@ -74,6 +85,7 @@ onUnmounted(() => {
                 icon: 'mdi-clock-alert',
                 trend: statsTrends.pendingApprovals,
                 gradient: { start: '#f093fb', end: '#f5576c' },
+                onClick: () => showPendingApprovalsDialog = true
               },
               {
                 value: stats.upcomingEvents,
@@ -81,6 +93,7 @@ onUnmounted(() => {
                 icon: 'mdi-calendar-check',
                 trend: statsTrends.upcomingEvents,
                 gradient: { start: '#4facfe', end: '#00f2fe' },
+                onClick: () => showUpcomingEventsDialog = true
               },
               {
                 value: stats.totalMembers,
@@ -88,6 +101,7 @@ onUnmounted(() => {
                 icon: 'mdi-account-group',
                 trend: statsTrends.totalMembers,
                 gradient: { start: '#43e97b', end: '#38f9d7' },
+                onClick: () => showParishMembersDialog = true
               },
             ]"
             :key="index"
@@ -95,10 +109,12 @@ onUnmounted(() => {
             <v-card
               :style="{
                 background: `linear-gradient(135deg, ${stat.gradient.start}, ${stat.gradient.end})`,
-                color: 'white'
+                color: 'white',
+                cursor: 'pointer'
               }"
               class="rounded-lg overflow-hidden position-relative elevation-4 transition-all-3"
               hover
+              @click="stat.onClick"
             >
               <v-card-text class="text-center pa-3 pa-md-4 position-relative">
                 <div
@@ -163,6 +179,12 @@ onUnmounted(() => {
           </v-col>
         </v-row>
       </v-container>
+
+      <!-- Dialogs -->
+      <TotalBookingsDialog v-model="showTotalBookingsDialog" />
+      <PendingApprovalsDialog v-model="showPendingApprovalsDialog" />
+      <UpcomingEventsDialog v-model="showUpcomingEventsDialog" />
+      <ParishMembersDialog v-model="showParishMembersDialog" />
     </template>
   </AdminHeader>
 </template>
