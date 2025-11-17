@@ -369,7 +369,7 @@ onMounted(async () => {
 }
 
 .header {
-  font-family: 'Jomolhari', serif;
+  font-family: 'Roboto', sans-serif;
   font-weight: 600;
   color: #1565c0 !important;
   text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
