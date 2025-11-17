@@ -51,9 +51,9 @@ export const eventCategories: EventCategory[] = [
   { name: 'mass', label: 'Holy Mass', color: '#f093fb', icon: 'mdi-church' },
   { name: 'event', label: 'Parish Event', color: '#43e97b', icon: 'mdi-calendar-star' },
   { name: 'celebration', label: 'Celebration', color: '#FF9800', icon: 'mdi-party-popper' },
-  { name: 'wedding', label: 'Wedding', color: '#667eea', icon: 'mdi-heart' },
+  { name: 'wedding', label: 'Wedding', color: '#E91E63', icon: 'mdi-heart' },
   { name: 'baptism', label: 'Baptism', color: '#4facfe', icon: 'mdi-water' },
-  { name: 'funeral', label: 'Funeral', color: '#424242', icon: 'mdi-cross' },
+  { name: 'funeral', label: 'Funeral', color: '#795548', icon: 'mdi-cross' },
   { name: 'thanksgiving', label: 'Thanksgiving', color: '#FF5722', icon: 'mdi-hands-pray' },
 ]
 

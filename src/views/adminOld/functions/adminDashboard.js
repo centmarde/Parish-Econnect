@@ -33,8 +33,8 @@ export const eventCategories = ref([
   {
     name: 'wedding',
     label: 'Wedding',
-    color: '#667eea',
-    gradient: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+    color: '#E91E63',
+    gradient: 'linear-gradient(135deg, #E91E63 0%, #F06292 100%)',
     icon: 'mdi-heart',
   },
   {
@@ -47,8 +47,8 @@ export const eventCategories = ref([
   {
     name: 'funeral',
     label: 'Funeral',
-    color: '#424242',
-    gradient: 'linear-gradient(135deg, #434343 0%, #000000 100%)',
+    color: '#795548',
+    gradient: 'linear-gradient(135deg, #795548 0%, #5D4037 100%)',
     icon: 'mdi-cross',
   },
   {

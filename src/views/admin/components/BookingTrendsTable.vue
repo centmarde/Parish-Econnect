@@ -48,11 +48,11 @@ const columnTotals = computed(() => {
       <thead>
         <tr>
           <th class="text-center font-weight-bold" style="background-color: #4A5568; color: white;">Month</th>
-          <th class="text-center font-weight-bold" style="background-color: #667eea; color: white;">Baptism</th>
-          <th class="text-center font-weight-bold" style="background-color: #f093fb; color: white;">Wedding</th>
-          <th class="text-center font-weight-bold" style="background-color: #4facfe; color: white;">Funeral</th>
-          <th class="text-center font-weight-bold" style="background-color: #43e97b; color: white;">Thanksgiving</th>
-          <th class="text-center font-weight-bold" style="background-color: #fa709a; color: white;">Others</th>
+          <th class="text-center font-weight-bold" style="background-color: #2196F3; color: white;">Baptism</th>
+          <th class="text-center font-weight-bold" style="background-color: #E91E63; color: white;">Wedding</th>
+          <th class="text-center font-weight-bold" style="background-color: #795548; color: white;">Funeral</th>
+          <th class="text-center font-weight-bold" style="background-color: #9C27B0; color: white;">Thanksgiving</th>
+          <th class="text-center font-weight-bold" style="background-color: #FFFFFF; color: black;">Others</th>
           <th class="text-center font-weight-bold" style="background-color: #2D3748; color: white;">Total</th>
         </tr>
       </thead>

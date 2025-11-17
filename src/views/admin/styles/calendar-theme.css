@@ -146,7 +146,7 @@
 
 /* Event categories - these will be overridden by inline styles but serve as fallbacks */
 .theme-calendar .cv-item.event-wedding {
-  background-color: #4CAF50;
+  background-color: #E91E63;
   color: white;
 }
 
@@ -156,7 +156,7 @@
 }
 
 .theme-calendar .cv-item.event-funeral {
-  background-color: #FF9800;
+  background-color: #795548;
   color: white;
 }
 
@@ -176,8 +176,9 @@
 }
 
 .theme-calendar .cv-item.event-others {
-  background-color: #795548;
-  color: white;
+  background-color: #FFFFFF;
+  color: black;
+  border: 1px solid rgba(0, 0, 0, 0.12);
 }
 
 /* Week view specific styles */

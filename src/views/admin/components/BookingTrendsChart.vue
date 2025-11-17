@@ -51,40 +51,40 @@ const chartData = computed(() => {
       {
         label: 'Baptism',
         data: trendData.value.map(d => d.baptism),
-        borderColor: '#667eea',
-        backgroundColor: 'rgba(102, 126, 234, 0.1)',
+        borderColor: '#2196F3',
+        backgroundColor: 'rgba(33, 150, 243, 0.1)',
         tension: 0.4,
         fill: true
       },
       {
         label: 'Wedding',
         data: trendData.value.map(d => d.wedding),
-        borderColor: '#f093fb',
-        backgroundColor: 'rgba(240, 147, 251, 0.1)',
+        borderColor: '#E91E63',
+        backgroundColor: 'rgba(233, 30, 99, 0.1)',
         tension: 0.4,
         fill: true
       },
       {
         label: 'Funeral',
         data: trendData.value.map(d => d.funeral),
-        borderColor: '#4facfe',
-        backgroundColor: 'rgba(79, 172, 254, 0.1)',
+        borderColor: '#795548',
+        backgroundColor: 'rgba(121, 85, 72, 0.1)',
         tension: 0.4,
         fill: true
       },
       {
         label: 'Thanksgiving',
         data: trendData.value.map(d => d.thanksgiving),
-        borderColor: '#43e97b',
-        backgroundColor: 'rgba(67, 233, 123, 0.1)',
+        borderColor: '#9C27B0',
+        backgroundColor: 'rgba(156, 39, 176, 0.1)',
         tension: 0.4,
         fill: true
       },
       {
         label: 'Others',
         data: trendData.value.map(d => d.others),
-        borderColor: '#fa709a',
-        backgroundColor: 'rgba(250, 112, 154, 0.1)',
+        borderColor: '#FFFFFF',
+        backgroundColor: 'rgba(255, 255, 255, 0.1)',
         tension: 0.4,
         fill: true
       }
@@ -146,11 +146,11 @@ const chartOptions = {
 const currentMonthStats = computed(() => {
   const counts = currentMonthCounts.value
   return [
-    { type: 'Baptism', count: counts.baptism, color: '#667eea', icon: 'mdi-water' },
-    { type: 'Wedding', count: counts.wedding, color: '#f093fb', icon: 'mdi-heart' },
-    { type: 'Funeral', count: counts.funeral, color: '#4facfe', icon: 'mdi-candle' },
-    { type: 'Thanksgiving', count: counts.thanksgiving, color: '#43e97b', icon: 'mdi-hands-pray' },
-    { type: 'Others', count: counts.others, color: '#fa709a', icon: 'mdi-dots-horizontal' }
+    { type: 'Baptism', count: counts.baptism, color: '#2196F3', icon: 'mdi-water' },
+    { type: 'Wedding', count: counts.wedding, color: '#E91E63', icon: 'mdi-heart' },
+    { type: 'Funeral', count: counts.funeral, color: '#795548', icon: 'mdi-candle' },
+    { type: 'Thanksgiving', count: counts.thanksgiving, color: '#9C27B0', icon: 'mdi-hands-pray' },
+    { type: 'Others', count: counts.others, color: '#FFFFFF', icon: 'mdi-dots-horizontal' }
   ]
 })
 
