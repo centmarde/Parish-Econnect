@@ -49,7 +49,7 @@ onMounted(async () => {
         <div class="d-flex align-center logo-section">
           <div class="logo-container">
             <v-img
-              src="logo.png"
+              src="/logo.png"
               :width="mobile ? '40px' : '50px'"
               class="me-3 logo-image"
               cover
@@ -222,7 +222,7 @@ onMounted(async () => {
       >
         <div class="drawer-header pa-4">
           <div class="d-flex align-center mb-3">
-            <v-img src="logo.png" width="35px" class="me-2" />
+            <v-img src="/logo.png" width="35px" class="me-2" />
             <div>
               <h3 class="drawer-title">Admin Menu</h3>
               <p class="drawer-subtitle ma-0">Parish Management</p>
@@ -348,7 +348,6 @@ onMounted(async () => {
 }
 
 .header {
-  font-family: 'Jomolhari', serif;
   font-weight: 600;
   color: #1565c0 !important;
   text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);

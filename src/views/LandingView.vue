@@ -99,12 +99,13 @@ const handleBookNow = () => {
                       <v-card-title
                         class="text-white font-weight-bold text-shadow"
                         :class="{
-                          'text-h5 justify-center': xs,
-                          'text-h4 justify-center': sm,
-                          'text-h4 justify-start': mdAndUp
+                          'text-h6 justify-center': xs,
+                          'text-h5 justify-center': sm,
+                          'text-h5 justify-start': mdAndUp
                         }"
+                        style="white-space: normal; word-wrap: break-word;"
                       >
-                        Welcome to Our Parish Community
+                       Welcome to San Isidro Labrador Parish (Bonbon)
                       </v-card-title>
 
                       <v-card-text

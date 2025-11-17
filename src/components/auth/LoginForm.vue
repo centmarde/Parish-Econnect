@@ -67,13 +67,13 @@ const onLoginSubmit = async () => {
 }
 
 // Social sign-in handlers (use Supabase OAuth)
-const signInWithGoogle = async () => {
-  console.log('Signing in with Google...')
-}
+// const signInWithGoogle = async () => {
+//   console.log('Signing in with Google...')
+// }
 
-const signInWithFacebook = async () => {
-  console.log('Signing in with Facebook...')
-}
+// const signInWithFacebook = async () => {
+//   console.log('Signing in with Facebook...')
+// }
 
 const switchToRegister = () => {
   emit('switch-to-register')
@@ -184,12 +184,12 @@ const onFormSubmit = () => {
         </div>
 
         <!-- Social login divider -->
-        <v-divider class="my-4">
+      <!--   <v-divider class="my-4">
           <span class="text-caption text-medium-emphasis px-3">Or continue with</span>
-        </v-divider>
+        </v-divider> -->
 
         <!-- Social login icons (replacing buttons) -->
-        <v-row class="ma-0 justify-center">
+       <!--  <v-row class="ma-0 justify-center">
           <v-col cols="6" class="pa-1 d-flex justify-center">
             <v-icon
               size="36"
@@ -216,7 +216,7 @@ const onFormSubmit = () => {
               mdi-facebook
             </v-icon>
           </v-col>
-        </v-row>
+        </v-row> -->
       </div>
     </v-form>
   </div>

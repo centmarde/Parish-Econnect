@@ -219,8 +219,8 @@ const handleDelete = async () => {
 <template>
   <v-container :class="containerPadding" fluid>
     <!-- Header with title and pagination controls -->
-    <div v-if="mdAndUp" class="d-flex align-center justify-space-between mb-4">
-      <div class="d-flex align-center">
+    <div v-if="mdAndUp" class="d-flex flex-column align-center mb-4">
+      <div class="d-flex align-center justify-center mb-3">
         <v-chip
           color="primary"
           variant="outlined"
@@ -229,13 +229,10 @@ const handleDelete = async () => {
         >
           MY BOOKINGS
         </v-chip>
-        <span v-if="allBookings.length" class="text-body-2 text-medium-emphasis ml-3">
-          ({{ allBookings.length }} total)
-        </span>
       </div>
 
       <!-- Pagination Controls - Desktop -->
-      <div v-if="allBookings.length" class="d-flex align-center">
+      <div v-if="allBookings.length" class="d-flex flex-column align-center">
         <v-pagination
           v-model="currentPage"
           :length="totalPages"
@@ -244,6 +241,9 @@ const handleDelete = async () => {
           color="primary"
           density="compact"
         />
+        <div class="text-body-2 text-medium-emphasis mt-2">
+          ({{ allBookings.length }} total)
+        </div>
       </div>
     </div>
 

@@ -9,6 +9,16 @@ const isVisible = ref(false)
 const router = useRouter()
 const showOthersDialog = ref(false)
 
+// Event colors matching calendar-theme.css
+const getEventColor = (item) => {
+  if (isWeddingEvent(item)) return '#E91E63' // Pink
+  if (isBaptismEvent(item)) return '#2196F3' // Blue
+  if (isFuneralEvent(item)) return '#795548' // Brown
+  if (isThanksgivingEvent(item)) return '#9C27B0' // Purple
+  if (isOthersEvent(item)) return '#607D8B' // Blue Grey
+  return '#607D8B' // Default
+}
+
 onMounted(() => {
   // animate in effect para sa more engaging experience
   setTimeout(() => {
@@ -94,7 +104,7 @@ const handleBooking = (item) => {
             <div class="d-flex justify-center mb-3">
               <v-avatar
                 size="64"
-                color="primary"
+                :color="getEventColor(item)"
                 class="elevation-2"
               >
                 <v-icon
@@ -117,7 +127,7 @@ const handleBooking = (item) => {
 
             <!-- Book button with enhanced styling -->
             <v-btn
-              color="primary"
+              :color="getEventColor(item)"
               size="small"
               variant="elevated"
               rounded="pill"

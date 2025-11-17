@@ -85,7 +85,6 @@ const { smAndDown } = useDisplay()
 
 <style scoped>
 h2 {
-  font-family: 'Jomolhari', serif;
   font-weight: 500;
 }
 </style>
