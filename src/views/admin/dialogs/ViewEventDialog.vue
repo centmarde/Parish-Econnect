@@ -3,6 +3,7 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { EVENT_CATEGORIES } from '../utils/constants'
 import { useAddEvents } from '../composables/addEvents'
 import { useAuthUserStore } from '@/stores/authUser'
+import { useOtherStore } from '@/stores/otherData'
 import {
   formatDate,
   formatTime,
@@ -37,6 +38,9 @@ const emit = defineEmits(['update:modelValue', 'approve-event', 'deny-event', 'd
 
 // Add Events composable for handling other_events deletion
 const { deleteEvent: deleteOtherEvent } = useAddEvents()
+
+// Other Store for handling others table deletion
+const otherStore = useOtherStore()
 
 // Auth store for getting user emails
 const authStore = useAuthUserStore()
@@ -195,11 +199,12 @@ const eventDetails = computed(() => {
     {
       label: 'Booking Owner',
       value: (() => {
-        // Check if this is an "others" category event
-        if (category.toLowerCase() === 'others' || category.toLowerCase() === 'other') {
+        // Check if this is a "churchevents" category event (admin-created events)
+        if (category.toLowerCase() === 'churchevents' || category.toLowerCase() === 'churchevent') {
           return 'San Isidro Labrador Parish'
         }
 
+        // For "others" and all other user bookings, show the actual booking owner
         const booking = storageData?.booking || fallbackEventData?.booking
 
         // Prioritize the fetched email from admin function
@@ -215,7 +220,7 @@ const eventDetails = computed(() => {
         }
         return 'N/A'
       })(),
-      source: (category.toLowerCase() === 'others' || category.toLowerCase() === 'other')
+      source: (category.toLowerCase() === 'churchevents' || category.toLowerCase() === 'churchevent')
         ? 'parish-default'
         : (bookingOwnerEmail.value ? 'admin-lookup' : (storageData?.booking ? 'localStorage' : 'fallback'))
     },
@@ -259,8 +264,9 @@ const eventDetails = computed(() => {
       ),
       source: storageData?.eventEndTime ? 'localStorage' : 'fallback'
     },
-    // Only show description for "others" category events
-    ...(category.toLowerCase() === 'others' || category.toLowerCase() === 'other' ? [{
+    // Show description for "churchevents" and "others" category events
+    ...(category.toLowerCase() === 'churchevents' || category.toLowerCase() === 'churchevent' ||
+        category.toLowerCase() === 'others' || category.toLowerCase() === 'other' ? [{
       label: 'Description',
       value: getFieldValue('description',
         fallbackEventData?.description ||
@@ -357,6 +363,43 @@ const attachedImages = computed(() => {
     })
   }
 
+  if (booking.attached_images_7) {
+    images.push({
+      url: booking.attached_images_7,
+      label: 'Attachment 7'
+    })
+  }
+  if (booking.attached_images_8) {
+    images.push({
+      url: booking.attached_images_8,
+      label: 'Attachment 8'
+    })
+  }
+  if (booking.attached_images_9) {
+    images.push({
+      url: booking.attached_images_9,
+      label: 'Attachment 9'
+    })
+  }
+  if (booking.attached_images_10) {
+    images.push({
+      url: booking.attached_images_10,
+      label: 'Attachment 10'
+    })
+  }
+  if (booking.attached_images_11) {
+    images.push({
+      url: booking.attached_images_11,
+      label: 'Attachment 11'
+    })
+  }
+  if (booking.attached_images_12) {
+    images.push({
+      url: booking.attached_images_12,
+      label: 'Attachment 12'
+    })
+  }
+
   return images
 })
 
@@ -391,20 +434,20 @@ const openImageDialog = (imageUrl) => {
 
 const handleDelete = async () => {
   try {
-    // Check if this is an "others" category event that should use other_events table
+    // Check if this is a "churchevents" category event that should use other_events table
     const eventCategory = eventData.value?.category?.toLowerCase()
 
-    if (eventCategory === 'others' || eventCategory === 'other') {
+    if (eventCategory === 'churchevents' || eventCategory === 'churchevent') {
       // Get the event ID from multiple possible locations
       const eventId = eventData.value?.originalEvent?.id ||
                      eventData.value?.bookingData?.id ||
                      eventData.value?.bookingId ||
                      eventData.value?.id
 
-      console.log('Attempting to delete other event with ID:', eventId, 'Event data:', eventData.value)
+      console.log('Attempting to delete church event with ID:', eventId, 'Event data:', eventData.value)
 
       if (eventId) {
-        // Extract numeric ID from calendar event ID (e.g., "other_1" -> 1)
+        // Extract numeric ID from calendar event ID (e.g., "churchevent_1" -> 1)
         const numericId = extractNumericIdFromCalendarEvent(eventId)
 
         console.log('Extracted numeric ID for deletion:', numericId, 'from original ID:', eventId)
@@ -413,15 +456,45 @@ const handleDelete = async () => {
         const result = await deleteOtherEvent(numericId)
 
         if (result.success) {
-          console.log('Successfully deleted other event from database')
+          console.log('Successfully deleted church event from database')
           dialog.value = false
           emit('delete-event', eventData.value) // Emit to refresh calendar
           return
         } else {
-          console.error('Failed to delete other event from database:', result.error)
+          console.error('Failed to delete church event from database:', result.error)
         }
       } else {
-        console.error('Could not find event ID for other event deletion')
+        console.error('Could not find event ID for church event deletion')
+      }
+    }
+    // Check if this is an "others" category event that should use others table
+    else if (eventCategory === 'others' || eventCategory === 'other') {
+      // Get the event ID from multiple possible locations
+      const eventId = eventData.value?.originalEvent?.id ||
+                     eventData.value?.bookingData?.id ||
+                     eventData.value?.bookingId ||
+                     eventData.value?.id
+
+      console.log('Attempting to delete others booking with ID:', eventId, 'Event data:', eventData.value)
+
+      if (eventId) {
+        // Extract numeric ID from calendar event ID (e.g., "other_1" -> 1)
+        const numericId = extractNumericIdFromCalendarEvent(eventId)
+
+        console.log('Extracted numeric ID for deletion:', numericId, 'from original ID:', eventId)
+
+        // Use the otherStore to delete from others table
+        try {
+          await otherStore.remove(numericId)
+          console.log('Successfully deleted others booking from database')
+          dialog.value = false
+          emit('delete-event', eventData.value) // Emit to refresh calendar
+          return
+        } catch (error) {
+          console.error('Failed to delete others booking from database:', error)
+        }
+      } else {
+        console.error('Could not find event ID for others booking deletion')
       }
     }
 

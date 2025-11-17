@@ -114,16 +114,18 @@ onMounted(() => {
                 anytime, online.
               </p>
 
-              <RouterLink to="/book-event" class="router-link">
-                <v-btn
-                  class="btn-0 mt-4 rounded-pill button"
-                  size="x-large"
-                  variant="flat"
-                  :class="smAndDown ? 'small-header' : 'large-header'"
-                >
-                  Book Now
-                </v-btn>
-              </RouterLink>
+              <div class="button-wrapper">
+                <RouterLink to="/book-event" class="router-link">
+                  <v-btn
+                    class="btn-0 rounded-pill button custom-btn-size"
+                    size="x-large"
+                    variant="flat"
+                    elevation="4"
+                  >
+                    BOOK NOW
+                  </v-btn>
+                </RouterLink>
+              </div>
 
               <ContactsWidget />
             </div>
@@ -180,7 +182,7 @@ body {
 }
 
 h1 {
-  font-family: 'Jomolhari', serif;
+  font-family: 'Roboto', sans-serif;
   font-weight: 700;
   color: rgb(49, 49, 95);
 }
@@ -207,23 +209,39 @@ h1 {
 }
 
 p {
-  font-family: Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;
+  font-family: 'Roboto', sans-serif;
   color: rgb(23, 26, 25);
 }
 
 .btn-0 {
-  background-color: rgb(49, 49, 95);
-  font-family: Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;
-  color: rgb(204, 195, 195);
+  background-color: rgb(49, 49, 95) !important;
+  font-family: 'Roboto', sans-serif;
+  color: white !important;
   font-weight: bold;
   transition:
     transform 0.3s ease,
     box-shadow 0.3s ease;
+  letter-spacing: 0.5px;
+}
+
+.custom-btn-size {
+  padding: 24px 56px !important;
+  font-size: 1.125rem !important;
+  min-width: 220px;
+  height: auto !important;
 }
 
 .btn-0:hover {
-  transform: translateY(-12px);
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+  transform: translateY(-4px);
+  box-shadow: 0 12px 24px rgba(49, 49, 95, 0.4) !important;
+}
+
+.button-wrapper {
+  display: flex;
+  justify-content: center;
+  margin: 40px 0;
+  z-index: 10;
+  position: relative;
 }
 
 .bg-wrapper > .v-responsive {
@@ -257,17 +275,17 @@ p {
 }
 
 .card-title {
-  font-family: Cambria, Georgia, serif;
+  font-family: 'Roboto', sans-serif;
   font-weight: bolder;
   text-align: center;
 }
 
 .dates {
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-family: 'Roboto', sans-serif;
 }
 
 .text2 {
-  font-family: Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;
+  font-family: 'Roboto', sans-serif;
 }
 .text-uppercase {
   text-transform: uppercase;
@@ -297,6 +315,8 @@ p {
 
 .content-container {
   margin-top: 20px;
+  position: relative;
+  z-index: 5;
 }
 
 .small-p {

@@ -48,7 +48,7 @@ onMounted(() => {
             <v-alert
               type="info"
               variant="tonal"
-              color="primary"
+              color="error"
               icon="mdi-information-outline"
               class="mb-4"
             >

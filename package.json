@@ -23,26 +23,35 @@
     "@supabase/supabase-js": "^2.49.4",
     "@vuepic/vue-datepicker": "^11.0.2",
     "axios": "^1.9.0",
+    "chart.js": "^4.5.1",
     "date-fns": "^4.1.0",
+    "docx": "^9.5.1",
+    "file-saver": "^2.0.5",
     "ionicons": "^8.0.13",
     "pinia": "^3.0.1",
     "vue": "^3.5.13",
+    "vue-chartjs": "^5.3.3",
     "vue-router": "^4.5.0",
     "vue-simple-calendar": "^7.2.1",
     "vue-toastification": "^2.0.0-rc.5",
-    "vuetify": "^3.10.0"
+    "vuetify": "^3.10.0",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@capacitor/cli": "^7.0.1",
     "@eslint/js": "^9.22.0",
     "@mdi/font": "^7.4.47",
+    "@typescript-eslint/eslint-plugin": "^8.46.2",
+    "@typescript-eslint/parser": "^8.46.2",
     "@vitejs/plugin-vue": "^5.2.3",
     "@vue/eslint-config-prettier": "^10.2.0",
     "eslint": "^9.22.0",
     "eslint-plugin-vue": "~10.0.0",
     "globals": "^16.0.0",
     "prettier": "3.5.3",
+    "typescript": "^5.9.3",
     "vite": "^6.2.4",
-    "vite-plugin-vue-devtools": "^7.7.7"
+    "vite-plugin-vue-devtools": "^7.7.7",
+    "vue-tsc": "^3.1.2"
   }
 }

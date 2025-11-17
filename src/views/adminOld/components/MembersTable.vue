@@ -16,7 +16,7 @@ const {
   viewMemberDetails,
   editMember,
   updateMemberRole,
-  confirmDelete,
+  // confirmDelete,
   getRoleColor
 } = membersManagement
 </script>
@@ -27,7 +27,6 @@ const {
           <v-data-table
             :items="paginatedMembers"
             :headers="[
-              { title: 'Member', key: 'member', sortable: false },
               { title: 'Email', key: 'email', sortable: true },
               { title: 'Role', key: 'role', sortable: true },
               { title: 'Total Bookings', key: 'bookings.total', sortable: true },
@@ -41,27 +40,17 @@ const {
             hide-default-footer
             no-data-text="No members found"
           >
-            <!-- Member Info -->
-            <template #[`item.member`]="{ item }">
+            <!-- Email with Avatar -->
+            <template #[`item.email`]="{ item }">
               <div class="d-flex align-center ga-3">
                 <v-avatar size="40" :color="item.image_url ? undefined : 'primary'">
                   <v-img v-if="item.image_url" :src="item.image_url" />
                   <span v-else class="text-white font-weight-bold">
-                    {{ (item.first_name?.[0] || '') + (item.last_name?.[0] || '') }}
+                    {{ (item.email?.split('@')[0] || '??').slice(0, 2).toUpperCase() }}
                   </span>
                 </v-avatar>
-                <div>
-                  <div class="font-weight-semibold">{{ item.first_name }} {{ item.last_name }}</div>
-                  <div class="text-caption text-grey-darken-2" v-if="item.phone">
-                    {{ item.phone }}
-                  </div>
-                </div>
+                <div class="text-body-2">{{ item.email }}</div>
               </div>
-            </template>
-
-            <!-- Email -->
-            <template #[`item.email`]="{ item }">
-              <div class="text-body-2">{{ item.email }}</div>
             </template>
 
             <!-- Role -->
@@ -155,12 +144,12 @@ const {
                       </v-list-item-title>
                     </v-list-item>
                     <v-divider />
-                    <v-list-item @click="confirmDelete(item)" class="text-red">
+                  <!--   <v-list-item @click="confirmDelete(item)" class="text-red">
                       <template #prepend>
                         <v-icon color="red">mdi-delete</v-icon>
                       </template>
                       <v-list-item-title>Delete Member</v-list-item-title>
-                    </v-list-item>
+                    </v-list-item> -->
                   </v-list>
                 </v-menu>
               </div>

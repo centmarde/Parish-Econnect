@@ -2,7 +2,9 @@
 import { ref, computed, onMounted, defineOptions } from 'vue'
 import { useDisplay } from 'vuetify'
 import ViewEventDialog from './ViewEventDialog.vue'
+import CalendarTableView from '@/views/admin/components/CalendarTableView.vue'
 import { useCalendarFetch } from '@/views/admin/composables/calendarFetch'
+import { useCalendarTabManager } from '@/views/admin/composables/calendarTabManager'
 import { EVENT_LEGEND } from '@/views/admin/utils/constants'
 import { CalendarView } from 'vue-simple-calendar'
 import 'vue-simple-calendar/dist/vue-simple-calendar.css'
@@ -18,6 +20,9 @@ const { xs, sm, mdAndUp, mobile } = useDisplay()
 
 // Calendar composable
 const { loading, error, allEvents, fetchAllEvents } = useCalendarFetch()
+
+// Tab manager composable
+const { activeTab, tabs } = useCalendarTabManager()
 
 // Calendar state
 const calendarRef = ref(null)
@@ -79,11 +84,20 @@ const subtitleClass = computed(() => {
   return 'text-body-2'
 })
 
+// Status filter state
+const selectedStatuses = ref(['approved', 'pending', 'denied', 'cancelled'])
+const availableStatuses = [
+  { label: 'Approved', value: 'approved', color: 'success' },
+  { label: 'Pending', value: 'pending', color: 'warning' },
+  { label: 'Denied', value: 'denied', color: 'error' },
+  { label: 'Cancelled', value: 'cancelled', color: 'grey' }
+]
+
 // Computed properties
 const calendarEvents = computed(() => {
-  // Only show approved events for public view
+  // Filter events based on selected statuses
   return allEvents.value
-    .filter(event => event.status === 'approved')
+    .filter(event => selectedStatuses.value.includes(event.status?.toLowerCase()))
     .map(event => ({
       id: event.id,
       title: event.title,
@@ -95,7 +109,11 @@ const calendarEvents = computed(() => {
         color: getContrastYIQ(event.color)
       },
       // Keep original event data for dialog
-      originalEvent: event
+      originalEvent: event,
+      // Add event metadata for table view
+      category: event.category,
+      status: event.status,
+      time: event.time
     }))
 })
 
@@ -200,6 +218,11 @@ const goToNextPeriod = () => {
   currentPeriodStart.value = current
 }
 
+// Table view event handlers (view-only)
+const handleTableViewEvent = (event) => {
+  handleEventClick(event)
+}
+
 // Lifecycle
 onMounted(async () => {
   await fetchAllEvents()
@@ -207,176 +230,282 @@ onMounted(async () => {
 </script>
 
 <template>
-  <v-card class="calendar-container" elevation="2" rounded="lg">
-    <!-- Calendar Header -->
-    <v-card-title :class="['d-flex align-center justify-space-between bg-primary text-white', headerPadding]">
-      <div class="d-flex align-center">
-        <v-icon :size="iconSize" :class="xs ? 'me-2' : 'me-3'">mdi-calendar-multiple</v-icon>
-        <div>
-          <h2 :class="[headerTextClass, 'font-weight-bold mb-1']">Parish Events Calendar</h2>
-          <p :class="[subtitleClass, 'mb-0 opacity-90']">View upcoming parish events</p>
+  <div class="calendar-manager">
+    <!-- Header Card -->
+    <v-card class="calendar-container mb-0" elevation="2" rounded="lg">
+      <!-- Calendar Header -->
+      <v-card-title :class="['d-flex align-center justify-space-between bg-primary text-white', headerPadding]">
+        <div class="d-flex align-center">
+          <v-icon :size="iconSize" :class="xs ? 'me-2' : 'me-3'">mdi-calendar-multiple</v-icon>
+          <div>
+            <h2 :class="[headerTextClass, 'font-weight-bold mb-1']">Parish Events Calendar</h2>
+            <p :class="[subtitleClass, 'mb-0 opacity-90']">View upcoming parish events</p>
+          </div>
         </div>
-      </div>
-    </v-card-title>
+      </v-card-title>
 
-    <v-divider></v-divider>
+      <!-- Tab Navigation -->
+      <v-tabs
+        v-model="activeTab"
+        bg-color="surface"
+        color="primary"
+        density="compact"
+      >
+        <v-tab
+          v-for="tab in tabs"
+          :key="tab.value"
+          :value="tab.value"
+        >
+          <v-icon :icon="tab.icon" class="me-2"></v-icon>
+          {{ tab.label }}
+        </v-tab>
+      </v-tabs>
+    </v-card>
 
-    <!-- Calendar Controls -->
-    <v-card-text :class="[cardPadding, 'pb-0']">
-      <div :class="['d-flex align-center justify-space-between', mobile ? 'flex-column gap-3' : 'flex-row gap-4', xs ? 'mb-4' : 'mb-6']">
-        <!-- Navigation Controls -->
-        <div :class="['d-flex align-center', xs ? 'gap-1' : 'gap-2']">
-          <v-btn
-            icon="mdi-chevron-left"
-            variant="outlined"
-            :size="buttonSize"
-            @click="goToPreviousPeriod"
-          ></v-btn>
+    <!-- Calendar View Card (Conditionally Rendered) -->
+    <v-card
+      v-show="activeTab === 'calendar'"
+      elevation="2"
+      rounded="lg"
+      class="mt-0 calendar-view-card"
+    >
+      <v-card-text :class="[cardPadding, 'pb-0']">
+        <div :class="['d-flex align-center justify-space-between', mobile ? 'flex-column gap-3' : 'flex-row gap-4', xs ? 'mb-4' : 'mb-6']">
+          <!-- Navigation Controls -->
+          <div :class="['d-flex align-center', xs ? 'gap-1' : 'gap-2']">
+            <v-btn
+              icon="mdi-chevron-left"
+              variant="outlined"
+              :size="buttonSize"
+              @click="goToPreviousPeriod"
+            ></v-btn>
 
-          <v-btn
-            color="primary"
-            variant="elevated"
-            :size="buttonSize"
-            :class="xs ? 'mx-1' : 'mx-2'"
-            @click="goToToday"
-          >
-            Today
-          </v-btn>
+            <v-btn
+              color="primary"
+              variant="elevated"
+              :size="buttonSize"
+              :class="xs ? 'mx-1' : 'mx-2'"
+              @click="goToToday"
+            >
+              Today
+            </v-btn>
 
-          <v-btn
-            icon="mdi-chevron-right"
-            variant="outlined"
-            :size="buttonSize"
-            @click="goToNextPeriod"
-          ></v-btn>
+            <v-btn
+              icon="mdi-chevron-right"
+              variant="outlined"
+              :size="buttonSize"
+              @click="goToNextPeriod"
+            ></v-btn>
 
-          <div :class="xs ? 'ms-2' : 'ms-4'">
-            <h3 :class="xs ? 'text-subtitle-1' : 'text-h6'" class="font-weight-medium">
-              {{ displayPeriodLabel }}
-            </h3>
+            <div :class="xs ? 'ms-2' : 'ms-4'">
+              <h3 :class="xs ? 'text-subtitle-1' : 'text-h6'" class="font-weight-medium">
+                {{ displayPeriodLabel }}
+              </h3>
+            </div>
+          </div>
+
+          <!-- View Toggle (Month/Week only for widget) -->
+          <div class="d-flex align-center gap-2">
+            <v-btn-toggle
+              v-model="currentView"
+              color="primary"
+              variant="outlined"
+              divided
+              mandatory
+              :density="xs ? 'compact' : 'default'"
+            >
+              <v-btn
+                v-for="view in calendarViews"
+                :key="view.value"
+                :value="view.value"
+                :size="buttonSize"
+                @click="changeView(view.value)"
+              >
+                <v-icon :icon="view.icon" :class="xs ? '' : 'me-1'" :size="xs ? '18' : '20'"></v-icon>
+                <span v-if="showViewLabels">{{ view.title }}</span>
+              </v-btn>
+            </v-btn-toggle>
           </div>
         </div>
 
-        <!-- View Toggle (Month/Week only for widget) -->
-        <div class="d-flex align-center gap-2">
-          <v-btn-toggle
-            v-model="currentView"
-            color="primary"
-            variant="outlined"
-            divided
-            mandatory
-            :density="xs ? 'compact' : 'default'"
-          >
-            <v-btn
-              v-for="view in calendarViews"
-              :key="view.value"
-              :value="view.value"
-              :size="buttonSize"
-              @click="changeView(view.value)"
+        <!-- Event Legend -->
+        <div :class="xs ? 'mb-4' : 'mb-6'">
+          <div class="d-flex flex-wrap align-center gap-2">
+            <span :class="[xs ? 'text-caption' : 'text-subtitle-2', 'font-weight-medium', xs ? 'me-1' : 'me-2']">
+              Event Types:
+            </span>
+            <v-chip
+              v-for="legend in EVENT_LEGEND"
+              :key="legend.label"
+              :color="legend.color"
+              :size="chipSize"
+              variant="tonal"
+              :class="xs ? 'me-1 mb-1' : 'me-2 mb-1'"
             >
-              <v-icon :icon="view.icon" :class="xs ? '' : 'me-1'" :size="xs ? '18' : '20'"></v-icon>
-              <span v-if="showViewLabels">{{ view.title }}</span>
-            </v-btn>
-          </v-btn-toggle>
+              <v-icon :icon="legend.icon" :class="xs ? 'me-1' : 'me-1'" :size="xs ? '14' : '16'"></v-icon>
+              <span :class="xs ? 'text-caption' : ''">{{ legend.label }}</span>
+            </v-chip>
+          </div>
         </div>
+
+        <!-- Status Filter -->
+        <div :class="xs ? 'mb-4' : 'mb-6'">
+          <div class="d-flex flex-wrap align-center gap-2">
+            <span :class="[xs ? 'text-caption' : 'text-subtitle-2', 'font-weight-medium', xs ? 'me-1' : 'me-2']">
+              Filter by Status:
+            </span>
+            <v-chip-group
+              v-model="selectedStatuses"
+              multiple
+              selected-class="text-primary"
+            >
+              <v-chip
+                v-for="status in availableStatuses"
+                :key="status.value"
+                :value="status.value"
+                :color="status.color"
+                :size="chipSize"
+                filter
+                variant="outlined"
+                :class="xs ? 'me-1 mb-1' : 'me-2 mb-1'"
+              >
+                <v-icon
+                  :icon="selectedStatuses.includes(status.value) ? 'mdi-check-circle' : 'mdi-circle-outline'"
+                  :class="xs ? 'me-1' : 'me-1'"
+                  :size="xs ? '14' : '16'"
+                ></v-icon>
+                <span :class="xs ? 'text-caption' : ''">{{ status.label }}</span>
+              </v-chip>
+            </v-chip-group>
+          </div>
+        </div>
+      </v-card-text>
+
+      <!-- Loading State -->
+      <div v-if="loading" :class="['d-flex justify-center align-center', xs ? 'pa-6' : 'pa-8']">
+        <v-progress-circular
+          indeterminate
+          color="primary"
+          :size="xs ? '40' : '48'"
+        ></v-progress-circular>
+        <span :class="['ms-3', xs ? 'text-body-2' : 'text-subtitle-1']">
+          Loading calendar events...
+        </span>
       </div>
 
-      <!-- Event Legend -->
-      <div :class="xs ? 'mb-4' : 'mb-6'">
-        <div class="d-flex flex-wrap align-center gap-2">
-          <span :class="[xs ? 'text-caption' : 'text-subtitle-2', 'font-weight-medium', xs ? 'me-1' : 'me-2']">
-            Event Types:
-          </span>
-          <v-chip
-            v-for="legend in EVENT_LEGEND"
-            :key="legend.label"
-            :color="legend.color"
-            :size="chipSize"
-            variant="tonal"
-            :class="xs ? 'me-1 mb-1' : 'me-2 mb-1'"
+      <!-- Error State -->
+      <v-alert
+        v-else-if="error"
+        type="error"
+        variant="tonal"
+        :class="xs ? 'ma-4' : 'ma-6'"
+      >
+        {{ error }}
+        <template #append>
+          <v-btn
+            color="error"
+            variant="text"
+            :size="buttonSize"
+            @click="fetchAllEvents"
           >
-            <v-icon :icon="legend.icon" :class="xs ? 'me-1' : 'me-1'" :size="xs ? '14' : '16'"></v-icon>
-            <span :class="xs ? 'text-caption' : ''">{{ legend.label }}</span>
-          </v-chip>
-        </div>
+            Retry
+          </v-btn>
+        </template>
+      </v-alert>
+
+      <!-- Calendar View -->
+      <div v-else :class="['calendar-wrapper pt-0', cardPadding]">
+        <CalendarView
+          ref="calendarRef"
+          :show-date="currentPeriodStart"
+          :items="calendarEvents"
+          :display-period-uom="displayPeriodUom"
+          :display-period-count="displayPeriodCount"
+          :starting-day-of-week="startingDayOfWeek"
+          :enable-drag-drop="false"
+          :show-times="false"
+          :time-format-options="{ hour: 'numeric', minute: '2-digit' }"
+          class="theme-calendar calendar-large"
+          item-content-height="2.5rem"
+          @click-item="handleEventClick"
+        >
+        </CalendarView>
       </div>
-    </v-card-text>
 
-    <!-- Loading State -->
-    <div v-if="loading" :class="['d-flex justify-center align-center', xs ? 'pa-6' : 'pa-8']">
-      <v-progress-circular
-        indeterminate
-        color="primary"
-        :size="xs ? '40' : '48'"
-      ></v-progress-circular>
-      <span :class="['ms-3', xs ? 'text-body-2' : 'text-subtitle-1']">
-        Loading calendar events...
-      </span>
-    </div>
-
-    <!-- Error State -->
-    <v-alert
-      v-else-if="error"
-      type="error"
-      variant="tonal"
-      :class="xs ? 'ma-4' : 'ma-6'"
-    >
-      {{ error }}
-      <template #append>
+      <!-- Empty State -->
+      <div
+        v-if="!loading && !error && calendarEvents.length === 0"
+        :class="['text-center', xs ? 'pa-6' : 'pa-8']"
+      >
+        <v-icon color="grey-lighten-1" :size="xs ? '48' : '64'" :class="xs ? 'mb-3' : 'mb-4'">
+          mdi-calendar-blank
+        </v-icon>
+        <h3 :class="[xs ? 'text-subtitle-1' : 'text-h6', 'text-grey-darken-1 mb-2']">
+          No Events Scheduled
+        </h3>
+        <p :class="[xs ? 'text-caption' : 'text-body-2', 'text-grey mb-4']">
+          No events are currently scheduled. Check back later for updates.
+        </p>
         <v-btn
-          color="error"
-          variant="text"
+          color="primary"
+          variant="elevated"
           :size="buttonSize"
           @click="fetchAllEvents"
         >
-          Retry
+          Refresh Calendar
         </v-btn>
-      </template>
-    </v-alert>
+      </div>
+    </v-card>
 
-    <!-- Calendar View -->
-    <div v-else :class="['calendar-wrapper pt-0', cardPadding]">
-      <CalendarView
-        ref="calendarRef"
-        :show-date="currentPeriodStart"
-        :items="calendarEvents"
-        :display-period-uom="displayPeriodUom"
-        :display-period-count="displayPeriodCount"
-        :starting-day-of-week="startingDayOfWeek"
-        :enable-drag-drop="false"
-        :show-times="false"
-        :time-format-options="{ hour: 'numeric', minute: '2-digit' }"
-        class="theme-calendar calendar-large"
-        item-content-height="2.5rem"
-        @click-item="handleEventClick"
-      >
-      </CalendarView>
-    </div>
-
-    <!-- Empty State -->
-    <div
-      v-if="!loading && !error && calendarEvents.length === 0"
-      :class="['text-center', xs ? 'pa-6' : 'pa-8']"
+    <!-- Table View Card (Conditionally Rendered) -->
+    <v-card
+      v-show="activeTab === 'table'"
+      elevation="2"
+      rounded="lg"
+      class="mt-0 table-view-card"
     >
-      <v-icon color="grey-lighten-1" :size="xs ? '48' : '64'" :class="xs ? 'mb-3' : 'mb-4'">
-        mdi-calendar-blank
-      </v-icon>
-      <h3 :class="[xs ? 'text-subtitle-1' : 'text-h6', 'text-grey-darken-1 mb-2']">
-        No Events Scheduled
-      </h3>
-      <p :class="[xs ? 'text-caption' : 'text-body-2', 'text-grey mb-4']">
-        No approved events are currently scheduled. Check back later for updates.
-      </p>
-      <v-btn
-        color="primary"
-        variant="elevated"
-        :size="buttonSize"
-        @click="fetchAllEvents"
-      >
-        Refresh Calendar
-      </v-btn>
-    </div>
-  </v-card>
+      <!-- Status Filter for Table View -->
+      <v-card-text :class="[cardPadding, 'pb-0']">
+        <div :class="xs ? 'mb-4' : 'mb-6'">
+          <div class="d-flex flex-wrap align-center gap-2">
+            <span :class="[xs ? 'text-caption' : 'text-subtitle-2', 'font-weight-medium', xs ? 'me-1' : 'me-2']">
+              Filter by Status:
+            </span>
+            <v-chip-group
+              v-model="selectedStatuses"
+              multiple
+              selected-class="text-primary"
+            >
+              <v-chip
+                v-for="status in availableStatuses"
+                :key="status.value"
+                :value="status.value"
+                :color="status.color"
+                :size="chipSize"
+                filter
+                variant="outlined"
+                :class="xs ? 'me-1 mb-1' : 'me-2 mb-1'"
+              >
+                <v-icon
+                  :icon="selectedStatuses.includes(status.value) ? 'mdi-check-circle' : 'mdi-circle-outline'"
+                  :class="xs ? 'me-1' : 'me-1'"
+                  :size="xs ? '14' : '16'"
+                ></v-icon>
+                <span :class="xs ? 'text-caption' : ''">{{ status.label }}</span>
+              </v-chip>
+            </v-chip-group>
+          </div>
+        </div>
+      </v-card-text>
+
+      <CalendarTableView
+        :events="calendarEvents"
+        :loading="loading"
+        view-only
+        @view-event="handleTableViewEvent"
+      />
+    </v-card>
+  </div>
 
   <!-- Event Details Dialog (View-Only) -->
   <ViewEventDialog
@@ -387,12 +516,48 @@ onMounted(async () => {
 </template>
 
 <style scoped>
+.calendar-manager {
+  width: 100%;
+  height: 100%;
+}
+
+.calendar-view-card,
+.table-view-card {
+  min-height: calc(100vh - 200px);
+  border-top-left-radius: 0 !important;
+  border-top-right-radius: 0 !important;
+}
+
+/* Tab styling */
+:deep(.v-tab) {
+  text-transform: none;
+  font-weight: 500;
+}
+
+:deep(.v-tab--selected) {
+  font-weight: 600;
+}
+
 .calendar-wrapper {
   height: 100%;
+  min-height: 500px;
+}
+
+@media (min-width: 960px) {
+  .calendar-wrapper {
+    min-height: 600px;
+  }
 }
 
 .calendar-large {
   height: 100%;
+  min-height: 500px;
+}
+
+@media (min-width: 960px) {
+  .calendar-large {
+    min-height: 600px;
+  }
 }
 
 :deep(.cv-wrapper) {
@@ -402,6 +567,13 @@ onMounted(async () => {
   display: flex;
   flex-direction: column;
   flex: 1;
+  min-height: 500px;
+}
+
+@media (min-width: 960px) {
+  :deep(.cv-wrapper) {
+    min-height: 600px;
+  }
 }
 
 :deep(.cv-weeks) {
@@ -419,6 +591,21 @@ onMounted(async () => {
   flex: 1;
   min-height: 80px;
   padding: 4px;
+  border-color: rgba(var(--v-border-color), var(--v-border-opacity));
+}
+
+@media (min-width: 600px) {
+  :deep(.cv-day) {
+    min-height: 100px;
+    padding: 6px;
+  }
+}
+
+@media (min-width: 960px) {
+  :deep(.cv-day) {
+    min-height: 120px;
+    padding: 8px;
+  }
 }
 
 :deep(.cv-header-day) {
@@ -431,21 +618,7 @@ onMounted(async () => {
   min-height: 40px;
 }
 
-/* Responsive calendar adjustments */
 @media (min-width: 600px) {
-  .calendar-wrapper {
-    min-height: 500px;
-  }
-
-  :deep(.cv-wrapper) {
-    min-height: 500px;
-  }
-
-  :deep(.cv-day) {
-    min-height: 100px;
-    padding: 6px;
-  }
-
   :deep(.cv-header-day) {
     font-size: 0.9375rem;
     padding: 0.875rem 0;
@@ -454,28 +627,11 @@ onMounted(async () => {
 }
 
 @media (min-width: 960px) {
-  .calendar-wrapper {
-    min-height: 600px;
-  }
-
-  :deep(.cv-wrapper) {
-    min-height: 600px;
-  }
-
-  :deep(.cv-day) {
-    min-height: 120px;
-    padding: 8px;
-  }
-
   :deep(.cv-header-day) {
     font-size: 1rem;
     padding: 1rem 0;
     min-height: 50px;
   }
-}
-
-:deep(.cv-day) {
-  border-color: rgba(var(--v-border-color), var(--v-border-opacity));
 }
 
 :deep(.cv-day.today) {
@@ -568,6 +724,14 @@ onMounted(async () => {
 @media (min-width: 960px) {
   .event-time {
     font-size: 0.625rem;
+  }
+}
+
+/* Responsive adjustments */
+@media (max-width: 600px) {
+  .calendar-view-card,
+  .table-view-card {
+    min-height: calc(100vh - 180px);
   }
 }
 </style>

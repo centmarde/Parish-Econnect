@@ -46,16 +46,16 @@ onMounted(() => {
         lg="4"
         class="d-flex step-col"
       >
-        <v-card 
+        <v-card
           elevation="0"
           class="step-card fill-height"
-          :class="{ 
+          :class="{
             'step-visible': isVisible,
-            'step-hovered': hoveredStep === step.id 
+            'step-hovered': hoveredStep === step.id
           }"
-          :style="{ 
+          :style="{
             '--step-delay': `${index * 0.2}s`,
-            '--step-gradient': step.gradient 
+            '--step-gradient': step.gradient
           }"
           @mouseenter="setHoveredStep(step.id)"
           @mouseleave="clearHoveredStep"
@@ -65,20 +65,20 @@ onMounted(() => {
             {{ step.id }}
           </div>
 
-          <v-card-text class="text-center pa-6">
+          <v-card-text class="text-center pa-4">
             <!-- Icon with Animation -->
-            <div class="icon-container mb-3">
+            <div class="icon-container mb-2">
               <v-avatar
-                size="32"
-                class="step-icon elevation-4"
+                size="40"
+                class="step-icon elevation-3"
                 :style="{ background: step.gradient }"
               >
-                <v-icon :icon="step.icon" size="16" color="white"></v-icon>
+                <v-icon :icon="step.icon" size="20" color="white"></v-icon>
               </v-avatar>
             </div>
 
             <!-- Title -->
-            <h3 class="text-subtitle-2 font-weight-bold mb-2 step-title">
+            <h3 class="text-subtitle-2 font-weight-bold mb-1 step-title">
               {{ step.title }}
             </h3>
 
@@ -165,8 +165,8 @@ onMounted(() => {
 
 .step-card {
   position: relative;
-  border-radius: 20px !important;
-  border: 2px solid rgba(var(--v-theme-on-surface), 0.05);
+  border-radius: 12px !important;
+  border: 1px solid rgba(var(--v-theme-on-surface), 0.05);
   background: rgba(var(--v-theme-surface), 0.8);
   backdrop-filter: blur(10px);
   transform: translateY(30px);
@@ -174,10 +174,10 @@ onMounted(() => {
   transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
   overflow: visible;
   /* Fixed card size for consistent layout on desktop */
-  width: 50rem;
-  max-width: 60rem;
-  height: 280px;
-  min-height: 280px;
+  width: 100%;
+  max-width: 100%;
+  height: 200px;
+  min-height: 200px;
   margin: 0 auto;
 }
 
@@ -189,18 +189,18 @@ onMounted(() => {
 
 .step-card:hover,
 .step-card.step-hovered {
-  transform: translateY(-8px);
+  transform: translateY(-4px);
   border-color: rgba(var(--v-theme-primary), 0.3);
-  box-shadow: 0 20px 40px rgba(var(--v-theme-on-surface), 0.1);
+  box-shadow: 0 8px 24px rgba(var(--v-theme-on-surface), 0.1);
 }
 
 /* Step Number Badge */
 .step-number {
   position: absolute;
-  top: -10px;
-  right: 12px;
-  width: 22px;
-  height: 22px;
+  top: -8px;
+  right: 8px;
+  width: 24px;
+  height: 24px;
   background: var(--step-gradient);
   border-radius: 50%;
   display: flex;
@@ -208,9 +208,9 @@ onMounted(() => {
   justify-content: center;
   color: white;
   font-weight: bold;
-  font-size: 11px;
+  font-size: 12px;
   z-index: 2;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
 /* Icon Animation */
@@ -257,19 +257,20 @@ onMounted(() => {
 }
 
 .step-descriptions {
-  min-height: 60px;
-  font-size: 2px;
+  min-height: 50px;
 }
 
 .cebuano-text {
   font-style: italic;
   opacity: 0.85;
-  font-size: 0.1rem;
+  font-size: 0.7rem;
+  line-height: 1.3;
 }
 
 .english-text {
   font-weight: 500;
-  font-size: 0.5rem;
+  font-size: 0.75rem;
+  line-height: 1.3;
 }
 
 /* Action Button */

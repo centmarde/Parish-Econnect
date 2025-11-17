@@ -29,6 +29,9 @@ import {
   extractNumericIdFromCalendarEvent
 } from './helpers'
 import { useAddEvents } from './addEvents'
+import { generateReferenceNumber as generateThanksgivingRefNumber } from '@/views/contThanksGiving/composables/refInsert'
+import { generateReferenceNumber as generateOthersRefNumber } from '@/views/contOthers/composables/refInsert'
+import { useOtherStore } from '@/stores/otherData'
 
 /**
  * Composable for handling Supabase queries for booking approval/denial/deletion
@@ -291,19 +294,26 @@ export const useActionQuery = () => {
       const typeInfo = extractBookingType(eventData, bookingData)
       //console.log('BOOKING TYPE CLASSIFICATION:', typeInfo)
 
+      // Prepare update data
+      const updateData: any = {
+        [typeInfo.approvalColumn]: true,
+        [typeInfo.denialColumn]: false, // Reset denial if previously denied
+      }
+
+      // For thanksgiving bookings, generate and insert ref_number
+      if (typeInfo.type === 'thanksgiving') {
+        updateData.ref_number = generateThanksgivingRefNumber()
+      }
+
+      // For others bookings, generate and insert ref_number (skip approved phase, go directly to completed)
       if (typeInfo.type === 'others') {
-        error.value = 'Cannot approve: Other events are automatically approved when created'
-        return { success: false, error: error.value }
+        updateData.ref_number = generateOthersRefNumber()
       }
 
       // Execute Supabase update query
       const { data, error: updateError } = await supabase
         .from(typeInfo.tableName)
-        .update({
-          [typeInfo.approvalColumn]: true,
-          [typeInfo.denialColumn]: false, // Reset denial if previously denied
-
-        })
+        .update(updateData)
         .eq('id', bookingData.id)
         .select()
 
@@ -358,11 +368,6 @@ export const useActionQuery = () => {
       // Extract booking type/category information
       const typeInfo = extractBookingType(eventData, bookingData)
      // console.log(' BOOKING TYPE CLASSIFICATION FOR DENIAL:', typeInfo)
-
-      if (typeInfo.type === 'others') {
-        error.value = 'Cannot deny: Other events cannot be denied, only deleted'
-        return { success: false, error: error.value }
-      }
 
       // Get current user for audit trail
       const { data: userData } = await supabase.auth.getUser()
@@ -456,13 +461,15 @@ export const useActionQuery = () => {
       const typeInfo = extractBookingType(eventData, bookingData)
      // console.log('BOOKING TYPE CLASSIFICATION FOR DELETION:', typeInfo)
 
-      // Handle "others" category events using the other_events table
+      // Handle "others" category events (user bookings) using the others table
       if (typeInfo.type === 'others') {
         try {
-          const { deleteEvent: deleteOtherEvent } = useAddEvents()
+          const otherStore = useOtherStore()
 
-          // Extract numeric ID from calendar event ID (e.g., "other_1" -> 1)
-          const numericId = extractNumericIdFromCalendarEvent(bookingData.id)
+          // Extract numeric ID - bookingData.id should already be numeric for others bookings
+          const numericId = typeof bookingData.id === 'string'
+            ? extractNumericIdFromCalendarEvent(bookingData.id)
+            : bookingData.id
 
           // Ensure numericId is a number
           if (typeof numericId !== 'number') {
@@ -470,23 +477,19 @@ export const useActionQuery = () => {
             return { success: false, error: error.value }
           }
 
-          console.log('Deleting other event - Original ID:', bookingData.id, 'Numeric ID:', numericId)
+          console.log('Deleting others booking - Original ID:', bookingData.id, 'Numeric ID:', numericId)
 
-          const result = await deleteOtherEvent(numericId)
-
-          if (result.success) {
-            success.value = true
-            return { success: true }
-          } else {
-            error.value = result.error || 'Failed to delete other event'
-            return { success: false, error: error.value }
-          }
+          await otherStore.remove(numericId)
+          success.value = true
+          return { success: true }
         } catch (err) {
-          console.error('Error deleting other event:', err)
-          error.value = 'Failed to delete other event'
+          console.error('Error deleting others booking:', err)
+          error.value = 'Failed to delete others booking'
           return { success: false, error: error.value }
         }
-      }      // Execute Supabase delete query for regular bookings
+      }
+
+      // Execute Supabase delete query for regular bookings
       const { data, error: deleteError } = await supabase
         .from(typeInfo.tableName)
         .delete()

@@ -147,6 +147,22 @@ const onFormSubmit = () => {
         </v-avatar>
         <h2 class="text-h4 text-primary mb-2 welcome-text">Create Account</h2>
         <p class="text-body-2 text-medium-emphasis">Join our spiritual community today</p>
+
+        <!-- Admin Access Information Card -->
+        <v-card
+          class="mt-3 mb-4 mx-auto admin-info-card"
+          max-width="400"
+          variant="outlined"
+          color="info"
+        >
+          <v-card-text class="text-center py-3">
+            <v-icon color="info" size="20" class="mb-1">mdi-information-outline</v-icon>
+            <p class="text-caption text-info ma-0">
+              <strong>Admin Access:</strong> New accounts are registered as regular users.
+              Contact admin support if you need elevated privileges (admin/moderator access).
+            </p>
+          </v-card-text>
+        </v-card>
       </div>
 
       <div class="auth-form-content register-content">
@@ -206,67 +222,6 @@ const onFormSubmit = () => {
           </v-col>
         </v-row>
 
-        <!-- Account Role Selection -->
-        <div class="mb-1 mt-4">
-          <v-chip color="secondary" variant="tonal" class="mb-3">
-            <v-icon left size="small">mdi-shield-account</v-icon>
-            Account Type
-          </v-chip>
-        </div>
-
-        <v-row>
-          <v-col cols="12" md="6">
-            <v-select
-              v-model="registerData.role"
-              :items="[
-                { title: 'Regular User', value: 'user', subtitle: 'Standard parish member access' },
-                { title: 'Administrator', value: 'admin', subtitle: 'Full system access and management' }
-              ]"
-              item-title="title"
-              item-value="value"
-              label="Select Account Type"
-              variant="outlined"
-              color="primary"
-              density="comfortable"
-              prepend-inner-icon="mdi-account-cog"
-              :rules="[requiredValidator]"
-              class="form-field"
-              hide-details="auto"
-            >
-              <template v-slot:item="{ props, item }">
-                <v-list-item v-bind="props">
-
-                  <v-list-item-subtitle class="text-caption">{{ item.raw.subtitle }}</v-list-item-subtitle>
-                </v-list-item>
-              </template>
-            </v-select>
-          </v-col>
-          <v-col cols="12" md="6" class="d-flex align-center">
-            <v-alert
-              v-if="registerData.role === 'admin'"
-              type="warning"
-              variant="tonal"
-              density="compact"
-              class="text-caption"
-            >
-              <v-icon size="small" class="mr-1">mdi-information</v-icon>
-              Admin accounts have access to user management and system settings
-            </v-alert>
-            <v-alert
-              v-else
-              type="info"
-              variant="tonal"
-              density="compact"
-              class="text-caption"
-            >
-              <v-icon size="small" class="mr-1">mdi-check-circle</v-icon>
-              Standard user account for parish services
-            </v-alert>
-          </v-col>
-        </v-row>
-
-
-
         <!-- Enhanced Submit Button -->
         <v-hover v-slot:default="{ isHovering, props }" close-delay="200">
           <v-btn
@@ -306,6 +261,31 @@ const onFormSubmit = () => {
             >
               Need help with registration?
             </v-btn>
+          </v-col>
+        </v-row>
+
+        <!-- Admin Role Information with Tooltip -->
+        <v-row class="mt-1" no-gutters>
+          <v-col cols="12" class="text-center">
+            <v-tooltip location="top" max-width="300">
+              <template v-slot:activator="{ props }">
+                <v-btn
+                  v-bind="props"
+                  variant="text"
+                  size="small"
+                  color="info"
+                  prepend-icon="mdi-information"
+                  class="text-caption"
+                >
+                  Admin Access Information
+                </v-btn>
+              </template>
+              <span>
+                New accounts are registered as regular users by default.
+                If you need admin or moderator privileges, please contact
+                the admin support team after registration for role upgrade.
+              </span>
+            </v-tooltip>
           </v-col>
         </v-row>
       </div>
@@ -396,5 +376,18 @@ const onFormSubmit = () => {
 
 .toggle-link:hover {
   text-decoration: none;
+}
+
+.admin-info-card {
+  border: 1.5px solid rgba(33, 150, 243, 0.3) !important;
+  background: rgba(33, 150, 243, 0.05) !important;
+  transition: all 0.3s ease;
+}
+
+.admin-info-card:hover {
+  border-color: rgba(33, 150, 243, 0.5) !important;
+  background: rgba(33, 150, 243, 0.08) !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(33, 150, 243, 0.15) !important;
 }
 </style>

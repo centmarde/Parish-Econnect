@@ -33,6 +33,11 @@ const formData = computed({
   get: () => props.modelValue,
   set: (value) => emit('update:modelValue', value)
 })
+
+// Get today's date in YYYY-MM-DD format
+const today = computed(() => {
+  return new Date().toISOString().split('T')[0]
+})
 </script>
 
 <template>
@@ -88,6 +93,7 @@ const formData = computed({
         <v-text-field
           v-model="formData.thanksgiving_date"
           :rules="dateRules"
+          :min="today"
           type="date"
           label="Select date for thanksgiving"
           prepend-inner-icon="mdi-calendar"

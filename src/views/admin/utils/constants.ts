@@ -7,11 +7,12 @@ export const CALENDAR_TYPE_OPTIONS = [
 
 // Event categories and their colors
 export const EVENT_CATEGORIES = {
-  WEDDING: { name: 'Wedding', color: '#4CAF50', icon: 'mdi-heart' },
+  WEDDING: { name: 'Wedding', color: '#E91E63', icon: 'mdi-heart' },
   BAPTISM: { name: 'Baptism', color: '#2196F3', icon: 'mdi-baby-face' },
-  FUNERAL: { name: 'Funeral', color: '#FF9800', icon: 'mdi-cross' },
+  FUNERAL: { name: 'Funeral', color: '#795548', icon: 'mdi-cross' },
   THANKSGIVING: { name: 'Thanksgiving', color: '#9C27B0', icon: 'mdi-hands-pray' },
-  OTHERS: { name: 'Others', color: '#607D8B', icon: 'mdi-calendar-star' }
+  CHURCHEVENTS: { name: 'Church Events', color: '#607D8B', icon: 'mdi-calendar-star' },
+  OTHERS: { name: 'Others', color: '#FFFFFF', icon: 'mdi-calendar-blank' }
 }
 
 // Sample events for calendar display
@@ -38,6 +39,11 @@ export const EVENT_LEGEND = [
     color: EVENT_CATEGORIES.THANKSGIVING.color,
     label: EVENT_CATEGORIES.THANKSGIVING.name,
     icon: EVENT_CATEGORIES.THANKSGIVING.icon
+  },
+  {
+    color: EVENT_CATEGORIES.CHURCHEVENTS.color,
+    label: EVENT_CATEGORIES.CHURCHEVENTS.name,
+    icon: EVENT_CATEGORIES.CHURCHEVENTS.icon
   },
   {
     color: EVENT_CATEGORIES.OTHERS.color,
