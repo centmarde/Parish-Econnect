@@ -135,7 +135,7 @@ onUnmounted(() => {
                   {{ stat.value }}
                 </h2>
                 <p class="text-caption text-sm-body-2 mb-2 white--text">{{ stat.label }}</p>
-                <div class="text-caption">
+               <!--  <div class="text-caption">
                   <span v-if="typeof stat.trend === 'number'" class="text-green-lighten-2"
                     >↑ {{ stat.trend }}%</span
                   >
@@ -147,7 +147,7 @@ onUnmounted(() => {
                     >↑ {{ stat.trend.value }} new</span
                   >
                   <span v-else class="white--text">from last month</span>
-                </div>
+                </div> -->
                 <!-- Overlay gradient for card shine effect -->
                 <div
                   class="position-absolute"
