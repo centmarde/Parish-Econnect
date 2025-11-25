@@ -5,13 +5,23 @@ import { useWeddingStore } from '@/stores/weddingBookingData.js'
 export function useWeddingForm() {
   // Router for navigation
   const router = useRouter()
-  
+
   // Form interaction tracking
   const formTouched = ref(false)
 
   // Form validation rules
   const nameRules = [(v) => !!v || 'This field is required']
-  const dateRules = [(v) => !!v || 'Date is required']
+  const dateRules = [
+    (v) => !!v || 'Date is required',
+    (v) => {
+      if (!v) return true
+      const selectedDate = new Date(v)
+      const today = new Date()
+      today.setHours(0, 0, 0, 0) // Reset time to start of day
+      selectedDate.setHours(0, 0, 0, 0)
+      return selectedDate >= today || 'Cannot select past dates'
+    }
+  ]
 
   // Form data state
   const formData = ref({
@@ -29,11 +39,11 @@ export function useWeddingForm() {
 
   // Form validation computed
   const isFormValid = computed(() => {
-    return formData.value.bride_firstname && 
-           formData.value.bride_lastname && 
-           formData.value.groom_firstname && 
-           formData.value.groom_lastname && 
-           formData.value.wedding_date && 
+    return formData.value.bride_firstname &&
+           formData.value.bride_lastname &&
+           formData.value.groom_firstname &&
+           formData.value.groom_lastname &&
+           formData.value.wedding_date &&
            formData.value.starting_time
   })
 
@@ -59,7 +69,7 @@ export function useWeddingForm() {
   const submitWeddingBooking = async (refVform) => {
     // Mark form as touched para ma-show ang validation
     formTouched.value = true
-    
+
     // Validate na naka-complete na ang form
     if (!isFormValid.value) {
       return false
@@ -80,7 +90,7 @@ export function useWeddingForm() {
       // Reset form after successful submission
       refVform?.value?.reset()
       resetForm()
-      
+
       // Redirect to pending page
       router.push('/pending')
       return true
@@ -94,11 +104,11 @@ export function useWeddingForm() {
     formAction,
     nameRules,
     dateRules,
-    
+
     // Computed
     isFormValid,
     showValidationWarning,
-    
+
     // Functions
     resetForm,
     submitWeddingBooking,

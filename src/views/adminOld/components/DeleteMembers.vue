@@ -58,7 +58,7 @@ const handleCancel = () => {
                 {{ (memberToDelete.first_name?.[0] || '') + (memberToDelete.last_name?.[0] || '') }}
               </span>
             </v-avatar>
-            <div class="flex-grow-1">
+            <div class="grow">
               <div class="text-h6 font-weight-semibold">
                 {{ memberToDelete.first_name }} {{ memberToDelete.last_name }}
               </div>
@@ -66,7 +66,7 @@ const handleCancel = () => {
                 {{ memberToDelete.email }}
               </div>
               <v-chip
-                :color="memberToDelete.role === 'admin' ? 'purple' : memberToDelete.role === 'moderator' ? 'blue' : undefined"
+                :color="memberToDelete.role === 'admin' ? 'purple' : /* memberToDelete.role === 'moderator' ? 'blue' : */ undefined"
                 size="small"
                 variant="tonal"
                 class="text-capitalize mt-1"

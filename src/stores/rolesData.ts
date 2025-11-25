@@ -5,11 +5,11 @@ import { supabase } from '@/utils/supabase.js'
 // Type definitions based on user_roles table schema
 export interface UserRole {
   user_id: string
-  role: 'user' | 'admin' | 'moderator'
+  role: 'user' | 'admin' // | 'moderator' // Commented out moderator role
   created_at: string
   updated_at: string
 }
-
+/*  */
 export interface RoleChangeLog {
   id: number
   user_id: string
@@ -28,7 +28,7 @@ export const useRolesDataStore = defineStore('rolesData', () => {
   const error = ref<string | null>(null)
 
   // Valid roles based on table constraint
-  const validRoles = ['user', 'admin', 'moderator'] as const
+  const validRoles = ['user', 'admin'] as const // 'moderator' removed
 
   // Getters
   const getUserRoleById = computed(() => {
@@ -47,9 +47,10 @@ export const useRolesDataStore = defineStore('rolesData', () => {
     return userRoles.value.filter(userRole => userRole.role === 'admin')
   })
 
-  const getModeratorUsers = computed(() => {
-    return userRoles.value.filter(userRole => userRole.role === 'moderator')
-  })
+  /* const getModeratorUsers = computed(() => {
+    // return userRoles.value.filter(userRole => userRole.role === 'moderator')
+    return [] // Moderator role disabled
+  }) */
 
   const getRegularUsers = computed(() => {
     return userRoles.value.filter(userRole => userRole.role === 'user')
@@ -58,7 +59,8 @@ export const useRolesDataStore = defineStore('rolesData', () => {
   const getTotalUsersByRole = computed(() => {
     return {
       admin: userRoles.value.filter(role => role.role === 'admin').length,
-      moderator: userRoles.value.filter(role => role.role === 'moderator').length,
+      // moderator: userRoles.value.filter(role => role.role === 'moderator').length, // Disabled
+      moderator: 0, // Always 0 since moderator role is disabled
       user: userRoles.value.filter(role => role.role === 'user').length
     }
   })
@@ -70,17 +72,18 @@ export const useRolesDataStore = defineStore('rolesData', () => {
     }
   })
 
-  const isUserModerator = computed(() => {
-    return (userId: string): boolean => {
-      const userRole = getUserRoleById.value(userId)
-      return userRole?.role === 'moderator'
-    }
-  })
+  // const isUserModerator = computed(() => {
+  //   return (/*userId: string*/): boolean => {
+  //     // const userRole = getUserRoleById.value(userId)
+  //     // return userRole?.role === 'moderator'
+  //     return false // Moderator role disabled
+  //   }
+  // })
 
   const hasElevatedPrivileges = computed(() => {
     return (userId: string): boolean => {
       const userRole = getUserRoleById.value(userId)
-      return userRole?.role === 'admin' || userRole?.role === 'moderator'
+      return userRole?.role === 'admin' // || userRole?.role === 'moderator' // Moderator disabled
     }
   })
 
@@ -92,12 +95,13 @@ export const useRolesDataStore = defineStore('rolesData', () => {
     return currentUserRole.value?.role === 'admin'
   })
 
-  const isCurrentUserModerator = computed(() => {
-    return currentUserRole.value?.role === 'moderator'
-  })
+  /* const isCurrentUserModerator = computed(() => {
+    // return currentUserRole.value?.role === 'moderator'
+    return false // Moderator role disabled
+  }) */
 
   const currentUserHasElevatedPrivileges = computed(() => {
-    return currentUserRole.value?.role === 'admin' || currentUserRole.value?.role === 'moderator'
+    return currentUserRole.value?.role === 'admin' // || currentUserRole.value?.role === 'moderator' // Moderator disabled
   })
 
   // Actions
@@ -158,15 +162,15 @@ export const useRolesDataStore = defineStore('rolesData', () => {
     getUserRoleById,
     getUsersByRole,
     getAdminUsers,
-    getModeratorUsers,
+    // getModeratorUsers, // Disabled - moderator role removed
     getRegularUsers,
     getTotalUsersByRole,
     isUserAdmin,
-    isUserModerator,
+    // isUserModerator, // Disabled - moderator role removed
     hasElevatedPrivileges,
     getCurrentUserRole,
     isCurrentUserAdmin,
-    isCurrentUserModerator,
+    // isCurrentUserModerator, // Disabled - moderator role removed
     currentUserHasElevatedPrivileges,
     getCurrentUserRoleFromAuth,
 

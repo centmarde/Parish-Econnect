@@ -25,7 +25,7 @@ onMounted(() => {
         Easy Booking Process
       </v-chip>
       <h2 class="text-h6 font-weight-bold mb-2 text-gradient">Book Your Event in 3 Simple Steps</h2>
-      <p class="text-body-2 text-medium-emphasis">
+      <p class="text-body-2 text-medium-emphasis text-gradient">
         Follow our streamlined process to secure your event booking quickly and easily
       </p>
     </div>

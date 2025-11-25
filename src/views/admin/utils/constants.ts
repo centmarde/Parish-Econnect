@@ -12,7 +12,7 @@ export const EVENT_CATEGORIES = {
   FUNERAL: { name: 'Funeral', color: '#795548', icon: 'mdi-cross' },
   THANKSGIVING: { name: 'Thanksgiving', color: '#9C27B0', icon: 'mdi-hands-pray' },
   CHURCHEVENTS: { name: 'Church Events', color: '#607D8B', icon: 'mdi-calendar-star' },
-  OTHERS: { name: 'Others', color: '#FFFFFF', icon: 'mdi-calendar-blank' }
+  OTHERS: { name: 'Others', color: '#757575', icon: 'mdi-calendar-blank' }
 }
 
 // Sample events for calendar display

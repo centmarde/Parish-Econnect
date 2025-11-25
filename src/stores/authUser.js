@@ -92,9 +92,10 @@ export const useAuthUserStore = defineStore('authUser', () => {
     return rolesStore.isCurrentUserAdmin
   })
 
-  const isCurrentUserModerator = computed(() => {
-    return rolesStore.isCurrentUserModerator
-  })
+  /* const isCurrentUserModerator = computed(() => {
+    // return rolesStore.isCurrentUserModerator
+    return false // Moderator role disabled
+  }) */
 
   const currentUserHasElevatedPrivileges = computed(() => {
     return rolesStore.currentUserHasElevatedPrivileges
@@ -232,9 +233,10 @@ export const useAuthUserStore = defineStore('authUser', () => {
     return rolesStore.isUserAdmin(userId)
   }
 
-  function isUserModerator(userId) {
-    return rolesStore.isUserModerator(userId)
-  }
+  // function isUserModerator(/*userId*/) {
+  //   // return rolesStore.isUserModerator(userId)
+  //   return false // Moderator role disabled
+  // }
 
   function hasUserElevatedPrivileges(userId) {
     return rolesStore.hasElevatedPrivileges(userId)
@@ -254,9 +256,10 @@ export const useAuthUserStore = defineStore('authUser', () => {
     return rolesStore.isCurrentUserAdmin
   }
 
-  function canAccessModeratorPages() {
-    return rolesStore.isCurrentUserModerator || rolesStore.isCurrentUserAdmin
-  }
+  // function canAccessModeratorPages() {
+  //   // return rolesStore.isCurrentUserModerator || rolesStore.isCurrentUserAdmin
+  //   return rolesStore.isCurrentUserAdmin // Only admins can access, moderator disabled
+  // }
 
   function canAccessUserPages() {
     return !!userData.value // Just need to be authenticated
@@ -467,17 +470,17 @@ export const useAuthUserStore = defineStore('authUser', () => {
 
     // Role management functions integrated with rolesData store
     isCurrentUserAdmin,
-    isCurrentUserModerator,
+    // isCurrentUserModerator, // Disabled - moderator role removed
     currentUserHasElevatedPrivileges,
     getCurrentUserRoleDetails,
     checkUserRole,
     isUserAdmin,
-    isUserModerator,
+    // isUserModerator, // Disabled - moderator role removed
     hasUserElevatedPrivileges,
     getCurrentUserRole,
     refreshCurrentUserRole,
     canAccessAdminPages,
-    canAccessModeratorPages,
+    // canAccessModeratorPages, // Disabled - moderator role removed
     canAccessUserPages,
 
     notifications,

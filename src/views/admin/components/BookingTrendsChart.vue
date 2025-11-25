@@ -83,8 +83,8 @@ const chartData = computed(() => {
       {
         label: 'Others',
         data: trendData.value.map(d => d.others),
-        borderColor: '#FFFFFF',
-        backgroundColor: 'rgba(255, 255, 255, 0.1)',
+        borderColor: '#607D8B',
+        backgroundColor: 'rgba(96, 125, 139, 0.1)',
         tension: 0.4,
         fill: true
       }
@@ -150,7 +150,7 @@ const currentMonthStats = computed(() => {
     { type: 'Wedding', count: counts.wedding, color: '#E91E63', icon: 'mdi-heart' },
     { type: 'Funeral', count: counts.funeral, color: '#795548', icon: 'mdi-candle' },
     { type: 'Thanksgiving', count: counts.thanksgiving, color: '#9C27B0', icon: 'mdi-hands-pray' },
-    { type: 'Others', count: counts.others, color: '#FFFFFF', icon: 'mdi-dots-horizontal' }
+    { type: 'Others', count: counts.others, color: '#607D8B', icon: 'mdi-dots-horizontal' }
   ]
 })
 

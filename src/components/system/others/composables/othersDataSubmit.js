@@ -7,7 +7,17 @@ export function useOthersForm() {
 
   // Form validation rules
   const nameRules = [(v) => !!v || 'This field is required']
-  const dateRules = [(v) => !!v || 'Date is required']
+  const dateRules = [
+    (v) => !!v || 'Date is required',
+    (v) => {
+      if (!v) return true
+      const selectedDate = new Date(v)
+      const today = new Date()
+      today.setHours(0, 0, 0, 0) // Reset time to start of day
+      selectedDate.setHours(0, 0, 0, 0)
+      return selectedDate >= today || 'Cannot select past dates'
+    }
+  ]
   const timeRules = [(v) => !!v || 'Time is required']
 
   // Form data state

@@ -58,7 +58,7 @@
             class="text-white text-decoration-none"
             style="opacity: 0.9; font-size: 0.875rem;"
           >
-            rianaiphonandale@gmail.com
+           silpbonbon@gmail.com
           </a>
         </div>
       </v-col>

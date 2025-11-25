@@ -358,7 +358,7 @@ const handleDelete = async () => {
                 </v-avatar>
                 <div>
                   <h3 :class="lgAndUp ? 'text-h5' : 'text-h6'" class="font-weight-medium d-flex align-center">
-                    {{ getBookingTitle(booking) }} {{ booking.bookingType === 'wedding' ? 'Wedding' : booking.bookingType === 'funeral' ? 'Funeral' : booking.bookingType === 'baptism' ? 'Baptism' : 'Thanksgiving' }}
+                    {{ getBookingTitle(booking) }} {{ booking.bookingType === 'wedding' ? 'Wedding' : booking.bookingType === 'funeral' ? 'Funeral' : booking.bookingType === 'baptism' ? 'Baptism' : booking.bookingType === 'thanksgiving' ? 'Thanksgiving' : '' }}
                     <v-icon v-if="isBookingCompleted(booking)" color="success" size="small" class="ml-2">
                       mdi-check-circle
                     </v-icon>
