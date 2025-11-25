@@ -26,9 +26,9 @@ const editedMember = ref({
 })
 
 // Phone validation rules
-const phoneRules = [
-  v => !v || /^\+?[\d\s-()]+$/.test(v) || 'Phone number must be valid'
-]
+// const phoneRules = [
+//   v => !v || /^\+?[\d\s-()]+$/.test(v) || 'Phone number must be valid'
+// ]
 
 // Watch for dialog open and populate form
 watch(() => editMemberDialog.value, (isOpen) => {
@@ -127,7 +127,7 @@ const handleCancel = () => {
             </v-col>
 
             <!-- Phone -->
-            <v-col cols="12">
+           <!--  <v-col cols="12">
               <v-text-field
                 v-model="editedMember.phone"
                 label="Phone Number"
@@ -139,7 +139,7 @@ const handleCancel = () => {
                 hint="Optional"
                 persistent-hint
               />
-            </v-col>
+            </v-col> -->
 
             <!-- Role -->
             <v-col cols="12">
@@ -148,7 +148,7 @@ const handleCancel = () => {
                 label="Role"
                 :items="[
                   { value: 'user', title: 'User', icon: 'mdi-account' },
-                  { value: 'moderator', title: 'Moderator', icon: 'mdi-shield-check' },
+                  // { value: 'moderator', title: 'Moderator', icon: 'mdi-shield-check' }, // Disabled
                   { value: 'admin', title: 'Administrator', icon: 'mdi-shield-crown' }
                 ]"
                 :disabled="actionLoading"

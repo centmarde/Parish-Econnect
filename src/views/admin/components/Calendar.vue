@@ -133,8 +133,26 @@ const getContrastYIQ = (hexcolor) => {
   return (yiq >= 128) ? '#000000' : '#FFFFFF'
 }
 
+// Helper function to check if a date is in the past
+const isPastDate = (date) => {
+  const today = new Date()
+  const compareDate = new Date(date)
+
+  // Reset time to start of day for accurate comparison
+  today.setHours(0, 0, 0, 0)
+  compareDate.setHours(0, 0, 0, 0)
+
+  return compareDate < today
+}
+
 // Methods
 const handleDateClick = (clickedDate) => {
+  // Check if the clicked date is in the past
+  if (isPastDate(clickedDate)) {
+    console.log('Cannot interact with past dates:', clickedDate)
+    return // Prevent any action on past dates
+  }
+
   // Fix timezone issue: use local date formatting instead of ISO string
   const year = clickedDate.getFullYear()
   const month = String(clickedDate.getMonth() + 1).padStart(2, '0')

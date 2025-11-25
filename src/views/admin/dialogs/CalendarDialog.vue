@@ -32,6 +32,23 @@ const emit = defineEmits(['update:modelValue', 'edit-event', 'add-event'])
 // Add Events composable
 const { loading, error, success, addEvent, clearMessages } = useAddEvents()
 
+// Helper function to check if a date is in the past
+const isPastDate = (dateString) => {
+  const today = new Date()
+  const compareDate = new Date(dateString)
+
+  // Reset time to start of day for accurate comparison
+  today.setHours(0, 0, 0, 0)
+  compareDate.setHours(0, 0, 0, 0)
+
+  return compareDate < today
+}
+
+// Computed property to check if selected date is in the past
+const isSelectedDatePast = computed(() => {
+  return isPastDate(props.selectedDate)
+})
+
 // Form data
 const showAddEventForm = ref(false)
 const eventForm = ref({
@@ -69,6 +86,12 @@ const getCategoryInfo = (category) => {
 }
 
 const toggleAddEventForm = () => {
+  // Prevent showing form for past dates
+  if (isSelectedDatePast.value) {
+    console.log('Cannot add events to past dates')
+    return
+  }
+
   showAddEventForm.value = !showAddEventForm.value
   if (showAddEventForm.value) {
     clearMessages()
@@ -84,6 +107,12 @@ const toggleAddEventForm = () => {
 
 const handleSubmitEvent = async () => {
   if (!eventForm.value.title.trim()) {
+    return
+  }
+
+  // Additional check to prevent adding events to past dates
+  if (isSelectedDatePast.value) {
+    console.log('Cannot add events to past dates')
     return
   }
 
@@ -166,16 +195,39 @@ const getStatusColor = (booking) => {
 
       <!-- Content -->
       <v-card-text class="pa-0">
+        <!-- Past Date Warning -->
+        <v-alert
+          v-if="isSelectedDatePast"
+          type="warning"
+          variant="tonal"
+          class="ma-4 mb-0"
+          density="compact"
+        >
+          <div class="d-flex align-center">
+            <v-icon icon="mdi-calendar-clock" class="me-2"></v-icon>
+            <span class="text-subtitle-2 font-weight-medium">
+              Past Date Selected
+            </span>
+          </div>
+          <div class="text-caption mt-1">
+            You cannot add new events or bookings on past dates. Please select a current or future date.
+          </div>
+        </v-alert>
+
         <!-- No events message -->
         <div v-if="eventsForDate.length === 0" class="text-center pa-8">
-          <v-icon color="primary" size="64" class="mb-4">
-            mdi-calendar-plus
+          <v-icon :color="isSelectedDatePast ? 'grey' : 'primary'" size="64" class="mb-4">
+            {{ isSelectedDatePast ? 'mdi-calendar-remove' : 'mdi-calendar-plus' }}
           </v-icon>
-          <h4 class="text-h6 text-primary mb-2">Add Events in This Day</h4>
+          <h4 class="text-h6 mb-2" :class="isSelectedDatePast ? 'text-grey' : 'text-primary'">
+            {{ isSelectedDatePast ? 'Past Date - No Actions Available' : 'Add Events in This Day' }}
+          </h4>
           <p class="text-body-2 text-grey">
-            Start scheduling events for {{ formattedDate }}. Click the button below to create your first event.
+            {{ isSelectedDatePast
+                ? 'This date has already passed. You can only view existing events.'
+                : `Start scheduling events for ${formattedDate}. Click the button below to create your first event.`
+            }}
           </p>
-
         </div>
 
         <!-- Events list -->
@@ -415,6 +467,7 @@ const getStatusColor = (booking) => {
           color="primary"
           variant="elevated"
           prepend-icon="mdi-plus"
+          :disabled="isSelectedDatePast"
           @click="toggleAddEventForm"
         >
           Add Event

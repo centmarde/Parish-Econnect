@@ -1,11 +1,11 @@
 <script setup>
-import { ref, defineProps, defineEmits } from 'vue'
+import { ref, defineProps, defineEmits, onMounted, onUpdated, watch } from 'vue'
 import { CalendarView } from 'vue-simple-calendar'
 import 'vue-simple-calendar/dist/vue-simple-calendar.css'
 import '../styles/calendar-theme.css'
 import { EVENT_LEGEND } from '../utils/constants.ts'
 
-defineProps({
+const props = defineProps({
   loading: {
     type: Boolean,
     default: false
@@ -91,6 +91,65 @@ const handleEventClick = (event) => {
 const handleRefresh = () => {
   emit('refresh')
 }
+
+// Helper function to check if a date is in the past
+const isPastDate = (date) => {
+  const today = new Date()
+  const compareDate = new Date(date)
+
+  // Reset time to start of day for accurate comparison
+  today.setHours(0, 0, 0, 0)
+  compareDate.setHours(0, 0, 0, 0)
+
+  return compareDate < today
+}
+
+// Override the date click handler to prevent past date interactions
+const handleDateClickSafe = (date) => {
+  if (isPastDate(date)) {
+    console.log('Past date clicked - interaction prevented:', date)
+    return false // Prevent interaction
+  }
+  handleDateClick(date)
+}
+
+// Function to mark past dates visually
+const markPastDates = () => {
+  if (!calendarRef.value) return
+
+  // Use nextTick to ensure DOM is updated
+  setTimeout(() => {
+    const dayElements = document.querySelectorAll('.cv-day')
+    dayElements.forEach(dayEl => {
+      const dayNumber = parseInt(dayEl.querySelector('.cv-day-number')?.textContent)
+      if (dayNumber && !isNaN(dayNumber)) {
+        const currentMonth = props.currentPeriodStart.getMonth()
+        const currentYear = props.currentPeriodStart.getFullYear()
+        const dateToCheck = new Date(currentYear, currentMonth, dayNumber)
+
+        if (isPastDate(dateToCheck) && !dayEl.classList.contains('outsideOfMonth')) {
+          dayEl.classList.add('past')
+        } else {
+          dayEl.classList.remove('past')
+        }
+      }
+    })
+  }, 100)
+}
+
+// Watch for period changes and re-mark past dates
+watch(() => props.currentPeriodStart, () => {
+  markPastDates()
+})
+
+// Mark past dates after component is mounted and updated
+onMounted(() => {
+  markPastDates()
+})
+
+onUpdated(() => {
+  markPastDates()
+})
 </script>
 
 <template>
@@ -160,8 +219,8 @@ const handleRefresh = () => {
             :key="legend.label"
             :color="legend.color"
             size="small"
-            variant="tonal"
-            class="me-2 mb-1"
+            variant="flat"
+            class="me-2 mb-1 event-legend-chip"
           >
             <v-icon :icon="legend.icon" class="me-1" size="16"></v-icon>
             {{ legend.label }}
@@ -232,7 +291,7 @@ const handleRefresh = () => {
         :time-format-options="{ hour: 'numeric', minute: '2-digit' }"
         class="theme-calendar calendar-large"
         item-content-height="2.5rem"
-        @click-date="handleDateClick"
+        @click-date="handleDateClickSafe"
         @click-item="handleEventClick"
       >
       </CalendarView>
@@ -333,6 +392,24 @@ const handleRefresh = () => {
   opacity: 0.6;
 }
 
+/* Past date styling - make them visually disabled */
+:deep(.cv-day.past) {
+  background-color: rgba(var(--v-theme-on-surface), 0.02) !important;
+  pointer-events: none !important;
+  cursor: not-allowed !important;
+}
+
+:deep(.cv-day.past .cv-day-number) {
+  color: rgba(var(--v-theme-on-surface), 0.3) !important;
+  text-decoration: line-through !important;
+  opacity: 0.5 !important;
+}
+
+:deep(.cv-day.past .cv-item) {
+  opacity: 0.4 !important;
+  pointer-events: none !important;
+}
+
 /* Conflict styling */
 :deep(.conflict-error) {
   border: 2px solid #f44336 !important;
@@ -380,5 +457,16 @@ const handleRefresh = () => {
     font-size: 0.75rem;
     padding: 0.5rem 0;
   }
+}
+
+/* Event legend chip styling */
+.event-legend-chip {
+  border: 1px solid rgba(var(--v-border-color), 0.3) !important;
+  font-weight: 500 !important;
+}
+
+.event-legend-chip .v-chip__content {
+  color: white !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 </style>

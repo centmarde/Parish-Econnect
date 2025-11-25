@@ -248,8 +248,6 @@ const canDelete = () => {
       :sort-by="sortBy"
       class="elevation-0"
       item-key="id"
-      show-expand
-      expand-on-click
     >
       <!-- Category Column -->
       <template #[`item.category`]="{ item }">
@@ -356,45 +354,6 @@ const canDelete = () => {
             </template>
           </v-tooltip>
         </div>
-      </template>
-
-      <!-- Expanded Row Details -->
-      <template #[`expanded-row`]="{ item }">
-        <tr>
-          <td colspan="6" class="pa-4">
-            <v-card variant="tonal" class="pa-4">
-              <v-row>
-                <v-col cols="12" md="6">
-                  <h4 class="text-subtitle-1 font-weight-bold mb-2">Event Details</h4>
-                  <div class="text-body-2 mb-1">
-                    <strong>Description:</strong> {{ item.description || 'No description provided' }}
-                  </div>
-                  <div class="text-body-2 mb-1">
-                    <strong>Location:</strong> {{ item.location || 'TBA' }}
-                  </div>
-                  <div class="text-body-2 mb-1">
-                    <strong>Duration:</strong> {{ item.duration || 'Not specified' }}
-                  </div>
-                </v-col>
-                <v-col cols="12" md="6">
-                  <h4 class="text-subtitle-1 font-weight-bold mb-2">Administrative Info</h4>
-                  <div class="text-body-2 mb-1">
-                    <strong>Created:</strong> {{ formatDate(item.createdAt) }}
-                  </div>
-                  <div class="text-body-2 mb-1">
-                    <strong>Contact:</strong> {{ item.contact || item.email || 'N/A' }}
-                  </div>
-                  <div class="text-body-2 mb-1">
-                    <strong>Phone:</strong> {{ item.phone || 'N/A' }}
-                  </div>
-                  <div class="text-body-2 mb-1" v-if="item.notes">
-                    <strong>Notes:</strong> {{ item.notes }}
-                  </div>
-                </v-col>
-              </v-row>
-            </v-card>
-          </td>
-        </tr>
       </template>
 
       <!-- Loading State -->

@@ -96,8 +96,8 @@ export function useMembersManagement() {
   const roleOptions = [
     { value: 'all', title: 'All Roles' },
     { value: 'user', title: 'User' },
-    { value: 'admin', title: 'Administrator' },
-    { value: 'moderator', title: 'Moderator' }
+    { value: 'admin', title: 'Administrator' }
+   /*  { value: 'moderator', title: 'Moderator' } */
   ]
 
   // Load members function
@@ -511,8 +511,8 @@ export function useMembersManagement() {
     switch (role) {
       case 'admin':
         return 'red'
-      case 'moderator':
-        return 'orange'
+      // case 'moderator': // Disabled
+      //   return 'orange'
       case 'user':
         return 'blue'
       default:

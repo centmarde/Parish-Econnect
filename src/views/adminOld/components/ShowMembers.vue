@@ -39,9 +39,9 @@ const {
                 {{
                   selectedMember.role === 'admin'
                     ? 'mdi-shield-crown'
-                    : selectedMember.role === 'moderator'
-                      ? 'mdi-shield-check'
-                      : 'mdi-account'
+                    // : selectedMember.role === 'moderator' // Disabled
+                    //   ? 'mdi-shield-check'
+                    : 'mdi-account'
                 }}
               </v-icon>
               {{ selectedMember.role }}

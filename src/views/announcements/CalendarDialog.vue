@@ -32,13 +32,13 @@ const handleDialogClose = () => {
       height="85vh"
     >
       <v-card-title
-        class="d-flex justify-end pa-2 text-white flex-shrink-0"
-        style="position: sticky; top: 0; z-index: 1;"
+        class="d-flex justify-end pa-2 shrink-0"
+        style="position: sticky; top: 0; z-index: 1; background-color: rgb(var(--v-theme-surface));"
       >
         <v-btn
           icon="mdi-close"
           variant="text"
-          color="white"
+          color="on-surface"
           size="small"
           @click="handleDialogClose"
         />
